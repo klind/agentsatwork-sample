@@ -11,6 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # The whole history, so the changelog step can compare with the base branch.
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 24
@@ -18,3 +21,11 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npm test
+      - name: Changelog entry
+        if: github.event_name == 'pull_request'
+        run: |
+          if git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- CHANGELOG.md; then
+            echo "CHANGELOG.md was not changed by this pull request."
+            echo "Every pull request adds a line under Unreleased in CHANGELOG.md that says what it changes."
+            exit 1
+          fi
