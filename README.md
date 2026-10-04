@@ -11,6 +11,7 @@ and in an adopter's first run. It is small on purpose, so a job is cheap and fas
 | GET | `/health` | Says the server is up |
 | GET | `/tasks` | Lists every task |
 | POST | `/tasks` | Adds a task, body `{"title": "..."}` |
+| GET | `/tasks/count` | Says how many tasks there are, and how many are done |
 | GET | `/tasks/:id` | Returns one task |
 | POST | `/tasks/:id/complete` | Marks a task done |
 | DELETE | `/tasks/:id` | Removes a task |

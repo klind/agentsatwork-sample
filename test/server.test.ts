@@ -40,6 +40,23 @@ describe('the HTTP API', () => {
     assert.equal((await call('GET', `/tasks/${id}`)).status, 404);
   });
 
+  it('counts the tasks, and the ones that are done', async () => {
+    const start = await call('GET', '/tasks/count');
+    assert.equal(start.status, 200);
+    const { total, done } = start.json as { total: number; done: number };
+
+    const first = (await call('POST', '/tasks', { title: 'Count me' })).json!.id as number;
+    const second = (await call('POST', '/tasks', { title: 'Count me too' })).json!.id as number;
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: total + 2, done } });
+
+    await call('POST', `/tasks/${first}/complete`);
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: total + 2, done: done + 1 } });
+
+    await call('DELETE', `/tasks/${first}`);
+    await call('DELETE', `/tasks/${second}`);
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total, done } });
+  });
+
   it('refuses a task without a title, and a body that is not JSON', async () => {
     assert.deepEqual(await call('POST', '/tasks', { title: '' }), { status: 400, json: { error: 'title must be text' } });
     assert.deepEqual(await call('POST', '/tasks', 'not json'), { status: 400, json: { error: 'the body must be JSON' } });
