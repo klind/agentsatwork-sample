@@ -1,0 +1,30 @@
+# What this repository tells AgentsAtWork about itself. Every key must be written.
+# It is read from the default branch, and nowhere else.
+
+stack: node
+base_branch: main
+
+# required: every job in this repository waits for a person before its first push.
+approval: not_required
+
+commands:
+  # Each is one line, run through a shell. The build line installs dependencies.
+  build: npm ci && npm run build
+  test: npm test
+  # How long any one command may run, in minutes, before it is killed.
+  timeout_min: 10
+
+# This repository has no database.
+migrations: { enabled: false }
+
+# Changes here are rejected before review.
+protected_paths: [".github/workflows/"]
+
+# Changes here may be reviewed and approved, but a person merges them.
+human_merge_paths: []
+
+# The names of the required checks come from the branch ruleset on GitHub.
+required_checks: { source: ruleset }
+
+auto_merge_label: llm-auto-merge
+isolation: host
