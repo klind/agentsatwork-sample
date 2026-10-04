@@ -36,4 +36,11 @@ export class TaskList {
   remove(id: number): boolean {
     return this.tasks.delete(id);
   }
+
+  /** How many tasks there are, and how many of them are done. */
+  count(): { total: number; done: number } {
+    let done = 0;
+    for (const task of this.tasks.values()) if (task.done) done++;
+    return { total: this.tasks.size, done };
+  }
 }

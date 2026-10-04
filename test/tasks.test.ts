@@ -33,4 +33,20 @@ describe('the task list', () => {
     assert.equal(tasks.remove(id), false);
     assert.equal(tasks.get(id), undefined);
   });
+
+  it('counts the tasks, and the ones that are done', () => {
+    const tasks = new TaskList();
+    assert.deepEqual(tasks.count(), { total: 0, done: 0 });
+
+    const { id } = tasks.add('Write the spec');
+    tasks.add('Review it');
+    tasks.add('Ship it');
+    assert.deepEqual(tasks.count(), { total: 3, done: 0 });
+
+    tasks.complete(id);
+    assert.deepEqual(tasks.count(), { total: 3, done: 1 });
+
+    tasks.remove(id);
+    assert.deepEqual(tasks.count(), { total: 2, done: 0 });
+  });
 });

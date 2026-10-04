@@ -7,6 +7,7 @@ import { TaskList, ValidationError } from './tasks.ts';
  *   GET    /health              is the server up
  *   GET    /tasks               every task
  *   POST   /tasks               add a task, body {"title": "..."}
+ *   GET    /tasks/count         how many tasks, and how many are done
  *   GET    /tasks/:id           one task
  *   POST   /tasks/:id/complete  mark a task done
  *   DELETE /tasks/:id           remove a task
@@ -34,6 +35,8 @@ async function handle(tasks: TaskList, request: IncomingMessage, response: Serve
     if (method === 'POST') return send(response, 201, tasks.add((await body(request)).title));
     return send(response, 405, { error: 'method not allowed' });
   }
+
+  if (parts.length === 2 && parts[1] === 'count' && method === 'GET') return send(response, 200, tasks.count());
 
   const id = Number(parts[1]);
   if (!Number.isInteger(id) || id < 1) return send(response, 404, { error: 'not found' });
