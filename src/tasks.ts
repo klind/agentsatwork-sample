@@ -33,6 +33,13 @@ export class TaskList {
     return task;
   }
 
+  /** Mark a task not done again. Returns it, or undefined when there is no such task. */
+  reopen(id: number): Task | undefined {
+    const task = this.tasks.get(id);
+    if (task) task.done = false;
+    return task;
+  }
+
   remove(id: number): boolean {
     return this.tasks.delete(id);
   }
