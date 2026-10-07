@@ -26,6 +26,18 @@ describe('the task list', () => {
     assert.equal(tasks.complete(99), undefined);
   });
 
+  it('reopens a task, and says so when there is no such task', () => {
+    const tasks = new TaskList();
+    const { id } = tasks.add('Ship it');
+    tasks.complete(id);
+    assert.deepEqual(tasks.reopen(id), { id, title: 'Ship it', done: false });
+    assert.equal(tasks.get(id)?.done, false);
+    assert.deepEqual(tasks.count(), { total: 1, done: 0 });
+
+    assert.deepEqual(tasks.reopen(id), { id, title: 'Ship it', done: false });
+    assert.equal(tasks.reopen(99), undefined);
+  });
+
   it('removes a task once', () => {
     const tasks = new TaskList();
     const { id } = tasks.add('Clean up');

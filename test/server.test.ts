@@ -40,6 +40,18 @@ describe('the HTTP API', () => {
     assert.equal((await call('GET', `/tasks/${id}`)).status, 404);
   });
 
+  it('reopens a task, done or not', async () => {
+    const id = (await call('POST', '/tasks', { title: 'Open again' })).json!.id as number;
+    const open = { status: 200, json: { id, title: 'Open again', done: false } };
+
+    await call('POST', `/tasks/${id}/complete`);
+    assert.deepEqual(await call('POST', `/tasks/${id}/reopen`), open);
+    assert.deepEqual(await call('POST', `/tasks/${id}/reopen`), open);
+    assert.deepEqual(await call('GET', `/tasks/${id}`), open);
+
+    await call('DELETE', `/tasks/${id}`);
+  });
+
   it('counts the tasks, and the ones that are done', async () => {
     const start = await call('GET', '/tasks/count');
     assert.equal(start.status, 200);
@@ -66,6 +78,7 @@ describe('the HTTP API', () => {
     assert.equal((await call('GET', '/nothing')).status, 404);
     assert.equal((await call('GET', '/tasks/abc')).status, 404);
     assert.equal((await call('POST', '/tasks/99/complete')).status, 404);
+    assert.equal((await call('POST', '/tasks/99/reopen')).status, 404);
     assert.equal((await call('PUT', '/tasks', { title: 'x' })).status, 405);
   });
 });

@@ -14,6 +14,7 @@ and in an adopter's first run. It is small on purpose, so a job is cheap and fas
 | GET | `/tasks/count` | Says how many tasks there are, and how many are done |
 | GET | `/tasks/:id` | Returns one task |
 | POST | `/tasks/:id/complete` | Marks a task done |
+| POST | `/tasks/:id/reopen` | Marks a task not done again |
 | DELETE | `/tasks/:id` | Removes a task |
 
 ## Working on it

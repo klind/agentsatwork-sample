@@ -10,6 +10,7 @@ import { TaskList, ValidationError } from './tasks.ts';
  *   GET    /tasks/count         how many tasks, and how many are done
  *   GET    /tasks/:id           one task
  *   POST   /tasks/:id/complete  mark a task done
+ *   POST   /tasks/:id/reopen    mark a task not done again
  *   DELETE /tasks/:id           remove a task
  */
 export function createApp(tasks: TaskList = new TaskList()): Server {
@@ -46,6 +47,7 @@ async function handle(tasks: TaskList, request: IncomingMessage, response: Serve
     return tasks.remove(id) ? send(response, 204) : send(response, 404, { error: 'not found' });
   }
   if (parts.length === 3 && parts[2] === 'complete' && method === 'POST') return found(response, tasks.complete(id));
+  if (parts.length === 3 && parts[2] === 'reopen' && method === 'POST') return found(response, tasks.reopen(id));
 
   return send(response, 404, { error: 'not found' });
 }
