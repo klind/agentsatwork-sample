@@ -24,8 +24,11 @@ jobs:
       - name: Changelog entry
         if: github.event_name == 'pull_request'
         run: |
-          if git diff --quiet "origin/${{ github.base_ref }}...HEAD" -- CHANGELOG.md; then
-            echo "CHANGELOG.md was not changed by this pull request."
-            echo "Every pull request adds a line under Unreleased in CHANGELOG.md that says what it changes."
+          number="${{ github.event.pull_request.number }}"
+          added=$(git diff "origin/${{ github.base_ref }}...HEAD" -- CHANGELOG.md | grep -E '^\+[^+]' || true)
+          if ! echo "$added" | grep -qE "\(#${number}\)[[:space:]]*$"; then
+            echo "CHANGELOG.md has no new line that ends with this pull request's number, (#${number})."
+            echo "Every pull request adds a line under Unreleased in CHANGELOG.md that says what it changes"
+            echo "and ends with its own number, for example: - \`GET /tasks\` lists the tasks. (#${number})"
             exit 1
           fi
