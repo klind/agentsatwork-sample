@@ -9,6 +9,7 @@ import { TaskList, ValidationError } from './tasks.ts';
  *   POST   /tasks               add a task, body {"title": "..."}
  *   GET    /tasks/count         how many tasks, and how many are done
  *   GET    /tasks/:id           one task
+ *   PATCH  /tasks/:id           change a task's title, body {"title": "..."}
  *   POST   /tasks/:id/complete  mark a task done
  *   DELETE /tasks/:id           remove a task
  */
@@ -42,6 +43,7 @@ async function handle(tasks: TaskList, request: IncomingMessage, response: Serve
   if (!Number.isInteger(id) || id < 1) return send(response, 404, { error: 'not found' });
 
   if (parts.length === 2 && method === 'GET') return found(response, tasks.get(id));
+  if (parts.length === 2 && method === 'PATCH') return found(response, tasks.rename(id, (await body(request)).title));
   if (parts.length === 2 && method === 'DELETE') {
     return tasks.remove(id) ? send(response, 204) : send(response, 404, { error: 'not found' });
   }

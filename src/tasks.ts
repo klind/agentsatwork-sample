@@ -6,6 +6,12 @@ export interface Task {
 
 export class ValidationError extends Error {}
 
+/** The title as it is stored. Throws when it is not text, or is empty. */
+function checked(title: unknown): string {
+  if (typeof title !== 'string' || title.trim() === '') throw new ValidationError('title must be text');
+  return title.trim();
+}
+
 /** The task list, kept in memory. One instance per server. */
 export class TaskList {
   private readonly tasks = new Map<number, Task>();
@@ -20,9 +26,15 @@ export class TaskList {
   }
 
   add(title: unknown): Task {
-    if (typeof title !== 'string' || title.trim() === '') throw new ValidationError('title must be text');
-    const task: Task = { id: this.nextId++, title: title.trim(), done: false };
+    const task: Task = { id: this.nextId++, title: checked(title), done: false };
     this.tasks.set(task.id, task);
+    return task;
+  }
+
+  /** Change a task's title. Returns it, or undefined when there is no such task. */
+  rename(id: number, title: unknown): Task | undefined {
+    const task = this.tasks.get(id);
+    if (task) task.title = checked(title);
     return task;
   }
 

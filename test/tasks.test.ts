@@ -26,6 +26,35 @@ describe('the task list', () => {
     assert.equal(tasks.complete(99), undefined);
   });
 
+  it('renames a task, and keeps its id and whether it is done', () => {
+    const tasks = new TaskList();
+    const { id } = tasks.add('Write the spec');
+    const other = tasks.add('Review it');
+    assert.deepEqual(tasks.rename(id, 'Write the plan'), { id, title: 'Write the plan', done: false });
+    assert.deepEqual(tasks.get(id), { id, title: 'Write the plan', done: false });
+
+    tasks.complete(id);
+    assert.deepEqual(tasks.rename(id, '  Ship the plan  '), { id, title: 'Ship the plan', done: true });
+    assert.deepEqual(tasks.get(other.id), { id: other.id, title: 'Review it', done: false });
+  });
+
+  it('says so when there is no task to rename', () => {
+    const tasks = new TaskList();
+    const { id } = tasks.add('Write the spec');
+    assert.equal(tasks.rename(99, 'Nothing'), undefined);
+    assert.deepEqual(tasks.all(), [{ id, title: 'Write the spec', done: false }]);
+  });
+
+  it('refuses to rename a task to no title, and leaves it as it was', () => {
+    const tasks = new TaskList();
+    const { id } = tasks.add('Write the spec');
+    assert.throws(() => tasks.rename(id, ''), ValidationError);
+    assert.throws(() => tasks.rename(id, '   '), ValidationError);
+    assert.throws(() => tasks.rename(id, 42), ValidationError);
+    assert.throws(() => tasks.rename(id, undefined), ValidationError);
+    assert.equal(tasks.get(id)?.title, 'Write the spec');
+  });
+
   it('removes a task once', () => {
     const tasks = new TaskList();
     const { id } = tasks.add('Clean up');

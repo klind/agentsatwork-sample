@@ -62,6 +62,41 @@ describe('the HTTP API', () => {
     assert.deepEqual(await call('POST', '/tasks', 'not json'), { status: 400, json: { error: 'the body must be JSON' } });
   });
 
+  it('renames a task, and keeps its id and whether it is done', async () => {
+    const id = (await call('POST', '/tasks', { title: 'Write the spec' })).json!.id as number;
+
+    assert.deepEqual(await call('PATCH', `/tasks/${id}`, { title: 'Write the plan' }), {
+      status: 200,
+      json: { id, title: 'Write the plan', done: false },
+    });
+    assert.deepEqual((await call('GET', `/tasks/${id}`)).json, { id, title: 'Write the plan', done: false });
+
+    await call('POST', `/tasks/${id}/complete`);
+    assert.deepEqual(await call('PATCH', `/tasks/${id}`, { title: 'Ship the plan', id: id + 1, done: false }), {
+      status: 200,
+      json: { id, title: 'Ship the plan', done: true },
+    });
+
+    await call('DELETE', `/tasks/${id}`);
+  });
+
+  it('refuses to rename a task to no title, and leaves it as it was', async () => {
+    const id = (await call('POST', '/tasks', { title: 'Keep me' })).json!.id as number;
+    const refused = { status: 400, json: { error: 'title must be text' } };
+
+    assert.deepEqual(await call('PATCH', `/tasks/${id}`, {}), refused);
+    assert.deepEqual(await call('PATCH', `/tasks/${id}`, { title: '' }), refused);
+    assert.deepEqual(await call('PATCH', `/tasks/${id}`, { title: 42 }), refused);
+    assert.deepEqual(await call('PATCH', `/tasks/${id}`, 'not json'), { status: 400, json: { error: 'the body must be JSON' } });
+    assert.deepEqual((await call('GET', `/tasks/${id}`)).json, { id, title: 'Keep me', done: false });
+
+    await call('DELETE', `/tasks/${id}`);
+  });
+
+  it('answers 404 when there is no task to rename', async () => {
+    assert.deepEqual(await call('PATCH', '/tasks/99999', { title: 'Nothing' }), { status: 404, json: { error: 'not found' } });
+  });
+
   it('answers 404 for what it does not have, and 405 for a method it does not take', async () => {
     assert.equal((await call('GET', '/nothing')).status, 404);
     assert.equal((await call('GET', '/tasks/abc')).status, 404);
