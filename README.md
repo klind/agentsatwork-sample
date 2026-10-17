@@ -12,6 +12,7 @@ and in an adopter's first run. It is small on purpose, so a job is cheap and fas
 | GET | `/tasks` | Lists every task |
 | POST | `/tasks` | Adds a task, body `{"title": "..."}` |
 | GET | `/tasks/count` | Says how many tasks there are, and how many are done |
+| DELETE | `/tasks/done` | Removes every task that is done, and says how many |
 | GET | `/tasks/:id` | Returns one task |
 | PATCH | `/tasks/:id` | Changes a task's title, body `{"title": "..."}` |
 | POST | `/tasks/:id/complete` | Marks a task done |

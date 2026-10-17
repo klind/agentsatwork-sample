@@ -57,6 +57,32 @@ describe('the HTTP API', () => {
     assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total, done } });
   });
 
+  it('removes every task that is done, and keeps the rest', async () => {
+    await call('DELETE', '/tasks/done');
+    const first = (await call('POST', '/tasks', { title: 'Done one' })).json!.id as number;
+    const open = (await call('POST', '/tasks', { title: 'Still open' })).json!.id as number;
+    const third = (await call('POST', '/tasks', { title: 'Done two' })).json!.id as number;
+    await call('POST', `/tasks/${first}/complete`);
+    await call('POST', `/tasks/${third}/complete`);
+
+    assert.deepEqual(await call('DELETE', '/tasks/done'), { status: 200, json: { removed: 2 } });
+    assert.equal((await call('GET', `/tasks/${first}`)).status, 404);
+    assert.equal((await call('GET', `/tasks/${third}`)).status, 404);
+    assert.deepEqual(await call('GET', `/tasks/${open}`), { status: 200, json: { id: open, title: 'Still open', done: false } });
+
+    await call('DELETE', `/tasks/${open}`);
+  });
+
+  it('answers removed 0 when no task is done', async () => {
+    await call('DELETE', '/tasks/done');
+    const id = (await call('POST', '/tasks', { title: 'Not done yet' })).json!.id as number;
+
+    assert.deepEqual(await call('DELETE', '/tasks/done'), { status: 200, json: { removed: 0 } });
+    assert.deepEqual((await call('GET', `/tasks/${id}`)).json, { id, title: 'Not done yet', done: false });
+
+    await call('DELETE', `/tasks/${id}`);
+  });
+
   it('refuses a task without a title, and a body that is not JSON', async () => {
     assert.deepEqual(await call('POST', '/tasks', { title: '' }), { status: 400, json: { error: 'title must be text' } });
     assert.deepEqual(await call('POST', '/tasks', 'not json'), { status: 400, json: { error: 'the body must be JSON' } });

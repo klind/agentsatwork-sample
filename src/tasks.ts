@@ -49,6 +49,15 @@ export class TaskList {
     return this.tasks.delete(id);
   }
 
+  /** Remove every task that is done. Returns how many it removed. */
+  removeDone(): number {
+    let removed = 0;
+    for (const task of this.tasks.values()) {
+      if (task.done && this.tasks.delete(task.id)) removed++;
+    }
+    return removed;
+  }
+
   /** How many tasks there are, and how many of them are done. */
   count(): { total: number; done: number } {
     let done = 0;
