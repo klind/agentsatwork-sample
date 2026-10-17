@@ -5,5 +5,6 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
+- `PATCH /tasks/:id` changes a task's title, body `{"title": "..."}`. (#5)
 - `GET /tasks/count` says how many tasks there are, and how many are done.
 - CI checks that a pull request adds a line here that ends with its number. (#4)
