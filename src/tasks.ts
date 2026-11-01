@@ -17,8 +17,10 @@ export class TaskList {
   private readonly tasks = new Map<number, Task>();
   private nextId = 1;
 
-  all(): Task[] {
-    return [...this.tasks.values()];
+  /** Every task, in the order they were added. Given `done`, only the tasks that are, or are not, done. */
+  all(done?: boolean): Task[] {
+    const tasks = [...this.tasks.values()];
+    return done === undefined ? tasks : tasks.filter((task) => task.done === done);
   }
 
   get(id: number): Task | undefined {

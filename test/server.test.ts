@@ -83,6 +83,61 @@ describe('the HTTP API', () => {
     await call('DELETE', `/tasks/${id}`);
   });
 
+  describe('listing tasks by whether they are done', () => {
+    let first: number;
+    let open: number;
+    let third: number;
+
+    before(async () => {
+      first = (await call('POST', '/tasks', { title: 'Done one' })).json!.id as number;
+      open = (await call('POST', '/tasks', { title: 'Still open' })).json!.id as number;
+      third = (await call('POST', '/tasks', { title: 'Done two' })).json!.id as number;
+      await call('POST', `/tasks/${first}/complete`);
+      await call('POST', `/tasks/${third}/complete`);
+    });
+
+    after(async () => {
+      for (const id of [first, open, third]) await call('DELETE', `/tasks/${id}`);
+    });
+
+    const mine = (json: Record<string, unknown> | undefined) =>
+      (json!.tasks as { id: number }[]).filter((task) => [first, open, third].includes(task.id));
+
+    it('lists only the tasks that are done with ?done=true', async () => {
+      const listed = await call('GET', '/tasks?done=true');
+      assert.equal(listed.status, 200);
+      assert.ok((listed.json!.tasks as { done: boolean }[]).every((task) => task.done));
+      assert.deepEqual(mine(listed.json), [
+        { id: first, title: 'Done one', done: true },
+        { id: third, title: 'Done two', done: true },
+      ]);
+    });
+
+    it('lists only the tasks that are not done with ?done=false', async () => {
+      const listed = await call('GET', '/tasks?done=false');
+      assert.equal(listed.status, 200);
+      assert.ok((listed.json!.tasks as { done: boolean }[]).every((task) => !task.done));
+      assert.deepEqual(mine(listed.json), [{ id: open, title: 'Still open', done: false }]);
+    });
+
+    it('lists every task without done', async () => {
+      const listed = await call('GET', '/tasks');
+      assert.equal(listed.status, 200);
+      assert.deepEqual(mine(listed.json), [
+        { id: first, title: 'Done one', done: true },
+        { id: open, title: 'Still open', done: false },
+        { id: third, title: 'Done two', done: true },
+      ]);
+    });
+
+    it('answers 400 and lists nothing for any other value of done', async () => {
+      const refused = { status: 400, json: { error: 'done must be true or false' } };
+      for (const query of ['done=yes', 'done=1', 'done=TRUE', 'done=', 'done', 'done=true&done=false']) {
+        assert.deepEqual(await call('GET', `/tasks?${query}`), refused, query);
+      }
+    });
+  });
+
   it('refuses a task without a title, and a body that is not JSON', async () => {
     assert.deepEqual(await call('POST', '/tasks', { title: '' }), { status: 400, json: { error: 'title must be text' } });
     assert.deepEqual(await call('POST', '/tasks', 'not json'), { status: 400, json: { error: 'the body must be JSON' } });

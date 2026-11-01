@@ -55,6 +55,25 @@ describe('the task list', () => {
     assert.equal(tasks.get(id)?.title, 'Write the spec');
   });
 
+  it('lists only the tasks that are done, or only those that are not, in order', () => {
+    const tasks = new TaskList();
+    assert.deepEqual(tasks.all(true), []);
+    assert.deepEqual(tasks.all(false), []);
+
+    const first = tasks.add('Write the spec');
+    const second = tasks.add('Review it');
+    const third = tasks.add('Ship it');
+    tasks.complete(first.id);
+    tasks.complete(third.id);
+
+    assert.deepEqual(tasks.all(true), [
+      { id: first.id, title: 'Write the spec', done: true },
+      { id: third.id, title: 'Ship it', done: true },
+    ]);
+    assert.deepEqual(tasks.all(false), [{ id: second.id, title: 'Review it', done: false }]);
+    assert.deepEqual(tasks.all().map((task) => task.id), [first.id, second.id, third.id]);
+  });
+
   it('removes a task once', () => {
     const tasks = new TaskList();
     const { id } = tasks.add('Clean up');

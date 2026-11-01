@@ -5,7 +5,7 @@ import { TaskList, ValidationError } from './tasks.ts';
  * The HTTP API over a task list:
  *
  *   GET    /health              is the server up
- *   GET    /tasks               every task
+ *   GET    /tasks               every task, or with ?done=true or ?done=false only those that are or are not done
  *   POST   /tasks               add a task, body {"title": "..."}
  *   GET    /tasks/count         how many tasks, and how many are done
  *   DELETE /tasks/done          remove every task that is done, and say how many
@@ -24,7 +24,7 @@ export function createApp(tasks: TaskList = new TaskList()): Server {
 }
 
 async function handle(tasks: TaskList, request: IncomingMessage, response: ServerResponse): Promise<void> {
-  const { pathname } = new URL(request.url ?? '/', 'http://localhost');
+  const { pathname, searchParams } = new URL(request.url ?? '/', 'http://localhost');
   const parts = pathname.split('/').filter(Boolean);
   const method = request.method ?? 'GET';
 
@@ -33,7 +33,7 @@ async function handle(tasks: TaskList, request: IncomingMessage, response: Serve
   if (parts[0] !== 'tasks') return send(response, 404, { error: 'not found' });
 
   if (parts.length === 1) {
-    if (method === 'GET') return send(response, 200, { tasks: tasks.all() });
+    if (method === 'GET') return send(response, 200, { tasks: tasks.all(doneFilter(searchParams)) });
     if (method === 'POST') return send(response, 201, tasks.add((await body(request)).title));
     return send(response, 405, { error: 'method not allowed' });
   }
@@ -57,6 +57,15 @@ async function handle(tasks: TaskList, request: IncomingMessage, response: Serve
 function found(response: ServerResponse, task: unknown): void {
   if (task === undefined) send(response, 404, { error: 'not found' });
   else send(response, 200, task);
+}
+
+/** The `done` query parameter: undefined when it is absent. Throws when it is not exactly one `true` or `false`. */
+function doneFilter(searchParams: URLSearchParams): boolean | undefined {
+  const values = searchParams.getAll('done');
+  if (values.length === 0) return undefined;
+  if (values.length === 1 && values[0] === 'true') return true;
+  if (values.length === 1 && values[0] === 'false') return false;
+  throw new ValidationError('done must be true or false');
 }
 
 async function body(request: IncomingMessage): Promise<Record<string, unknown>> {
