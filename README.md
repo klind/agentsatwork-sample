@@ -16,6 +16,7 @@ and in an adopter's first run. It is small on purpose, so a job is cheap and fas
 | GET | `/tasks/:id` | Returns one task |
 | PATCH | `/tasks/:id` | Changes a task's title, body `{"title": "..."}` |
 | POST | `/tasks/:id/complete` | Marks a task done |
+| POST | `/tasks/:id/reopen` | Marks a task not done |
 | DELETE | `/tasks/:id` | Removes a task |
 
 ## Working on it
