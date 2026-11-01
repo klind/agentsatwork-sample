@@ -118,7 +118,26 @@ describe('the task list', () => {
     assert.deepEqual(tasks.all(undefined, 'zebra'), []);
     assert.deepEqual(tasks.all(false, 'milk'), [{ id: buy.id, title: 'Buy milk', done: false }]);
     assert.deepEqual(tasks.all(true, 'milk'), [{ id: cow.id, title: 'Milk the cow', done: true }]);
-    assert.deepEqual(tasks.all(undefined, '').map((task) => task.id), [buy.id, cow.id, walk.id]);
+    assert.deepEqual(tasks.all(undefined, 'walk'), [{ id: walk.id, title: 'Walk the dog', done: false }]);
+  });
+
+  it('lists every task with an empty search, the same as with no search', () => {
+    const tasks = new TaskList();
+    assert.deepEqual(tasks.all(undefined, ''), []);
+
+    const buy = tasks.add('Buy milk');
+    const cow = tasks.add('Milk the cow');
+    const walk = tasks.add('Walk the dog');
+    tasks.complete(cow.id);
+
+    assert.deepEqual(tasks.all(undefined, ''), [
+      { id: buy.id, title: 'Buy milk', done: false },
+      { id: cow.id, title: 'Milk the cow', done: true },
+      { id: walk.id, title: 'Walk the dog', done: false },
+    ]);
+    assert.deepEqual(tasks.all(undefined, ''), tasks.all());
+    assert.deepEqual(tasks.all(false, ''), tasks.all(false));
+    assert.deepEqual(tasks.all(true, ''), tasks.all(true));
   });
 
   it('removes a task once', () => {

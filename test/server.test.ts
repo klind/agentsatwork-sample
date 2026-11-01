@@ -199,7 +199,13 @@ describe('the HTTP API', () => {
 
     it('lists every task with an empty q', async () => {
       assert.deepEqual(await call('GET', '/tasks?q='), await call('GET', '/tasks'));
-      assert.deepEqual(mine((await call('GET', '/tasks?q=')).json).map((task) => task.id), [buy, cow, walk]);
+      assert.deepEqual(mine((await call('GET', '/tasks?q=')).json), [
+        { id: buy, title: 'Buy milk', done: false },
+        { id: cow, title: 'Milk the cow', done: true },
+        { id: walk, title: 'Walk the dog', done: false },
+      ]);
+      assert.deepEqual(await call('GET', '/tasks?q=&done=false'), await call('GET', '/tasks?done=false'));
+      assert.deepEqual(await call('GET', '/tasks?q=&done=true'), await call('GET', '/tasks?done=true'));
     });
 
     it('still answers 400 for a bad done with q', async () => {
