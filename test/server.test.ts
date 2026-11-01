@@ -213,6 +213,54 @@ describe('the HTTP API', () => {
     });
   });
 
+  describe('limiting the task list', () => {
+    let first: number;
+    let open: number;
+    let third: number;
+
+    before(async () => {
+      first = (await call('POST', '/tasks', { title: 'Limit one' })).json!.id as number;
+      open = (await call('POST', '/tasks', { title: 'Limit two' })).json!.id as number;
+      third = (await call('POST', '/tasks', { title: 'Limit three' })).json!.id as number;
+      await call('POST', `/tasks/${first}/complete`);
+      await call('POST', `/tasks/${third}/complete`);
+    });
+
+    after(async () => {
+      for (const id of [first, open, third]) await call('DELETE', `/tasks/${id}`);
+    });
+
+    const listed = (json: Record<string, unknown> | undefined) => json!.tasks as { id: number; done: boolean }[];
+
+    it('lists only the first tasks with a limit below the count', async () => {
+      const every = listed((await call('GET', '/tasks')).json);
+      assert.ok(every.length > 2);
+      assert.deepEqual(await call('GET', '/tasks?limit=2'), { status: 200, json: { tasks: every.slice(0, 2) } });
+    });
+
+    it('lists every task with a limit above the count', async () => {
+      const every = await call('GET', '/tasks');
+      assert.deepEqual(await call('GET', `/tasks?limit=${listed(every.json).length + 10}`), every);
+    });
+
+    it('takes limit after done', async () => {
+      const done = listed((await call('GET', '/tasks?done=true')).json);
+      assert.ok(done.length > 1);
+      assert.deepEqual(await call('GET', '/tasks?done=true&limit=1'), { status: 200, json: { tasks: done.slice(0, 1) } });
+
+      const notDone = listed((await call('GET', '/tasks?done=false')).json);
+      assert.deepEqual(await call('GET', '/tasks?limit=1&done=false'), { status: 200, json: { tasks: notDone.slice(0, 1) } });
+    });
+
+    it('answers 400 for a limit that is not a whole number above zero', async () => {
+      const refused = { status: 400, json: { error: 'limit must be a whole number above zero' } };
+      for (const query of ['limit=0', 'limit=-1', 'limit=2.5', 'limit=abc', 'limit=', 'limit', 'limit=1e1', 'limit=%2B2', 'limit=1&limit=2']) {
+        assert.deepEqual(await call('GET', `/tasks?${query}`), refused, query);
+      }
+      assert.deepEqual(await call('GET', '/tasks?done=true&limit=0'), refused);
+    });
+  });
+
   it('refuses a task without a title, and a body that is not JSON', async () => {
     assert.deepEqual(await call('POST', '/tasks', { title: '' }), { status: 400, json: { error: 'title must be text' } });
     assert.deepEqual(await call('POST', '/tasks', 'not json'), { status: 400, json: { error: 'the body must be JSON' } });
