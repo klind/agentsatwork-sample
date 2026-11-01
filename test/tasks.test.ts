@@ -114,6 +114,7 @@ describe('the task list', () => {
     ];
     assert.deepEqual(tasks.all(undefined, 'milk'), both);
     assert.deepEqual(tasks.all(undefined, 'MILK'), both);
+    assert.deepEqual(tasks.all(undefined, 'mil'), both);
     assert.deepEqual(tasks.all(undefined, 'zebra'), []);
     assert.deepEqual(tasks.all(false, 'milk'), [{ id: buy.id, title: 'Buy milk', done: false }]);
     assert.deepEqual(tasks.all(true, 'milk'), [{ id: cow.id, title: 'Milk the cow', done: true }]);

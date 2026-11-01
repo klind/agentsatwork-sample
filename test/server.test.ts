@@ -183,6 +183,15 @@ describe('the HTTP API', () => {
       ]);
     });
 
+    it('finds q in part of a word', async () => {
+      const listed = await call('GET', '/tasks?q=mil');
+      assert.equal(listed.status, 200);
+      assert.deepEqual(mine(listed.json), [
+        { id: buy, title: 'Buy milk', done: false },
+        { id: cow, title: 'Milk the cow', done: true },
+      ]);
+    });
+
     it('takes q together with done', async () => {
       assert.deepEqual(mine((await call('GET', '/tasks?q=milk&done=false')).json), [{ id: buy, title: 'Buy milk', done: false }]);
       assert.deepEqual(mine((await call('GET', '/tasks?q=milk&done=true')).json), [{ id: cow, title: 'Milk the cow', done: true }]);
