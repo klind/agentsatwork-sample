@@ -178,6 +178,29 @@ describe('the HTTP API', () => {
     assert.deepEqual(await call('PATCH', '/tasks/99999', { title: 'Nothing' }), { status: 404, json: { error: 'not found' } });
   });
 
+  it('reopens a task that is done', async () => {
+    const id = (await call('POST', '/tasks', { title: 'Do it again' })).json!.id as number;
+    await call('POST', `/tasks/${id}/complete`);
+
+    assert.deepEqual(await call('POST', `/tasks/${id}/reopen`), { status: 200, json: { id, title: 'Do it again', done: false } });
+    assert.deepEqual((await call('GET', `/tasks/${id}`)).json, { id, title: 'Do it again', done: false });
+
+    await call('DELETE', `/tasks/${id}`);
+  });
+
+  it('answers with the task unchanged when it reopens a task that is not done', async () => {
+    const id = (await call('POST', '/tasks', { title: 'Still open' })).json!.id as number;
+
+    assert.deepEqual(await call('POST', `/tasks/${id}/reopen`), { status: 200, json: { id, title: 'Still open', done: false } });
+    assert.deepEqual((await call('GET', `/tasks/${id}`)).json, { id, title: 'Still open', done: false });
+
+    await call('DELETE', `/tasks/${id}`);
+  });
+
+  it('answers 404 when there is no task to reopen', async () => {
+    assert.deepEqual(await call('POST', '/tasks/99999/reopen'), { status: 404, json: { error: 'not found' } });
+  });
+
   it('answers 404 for what it does not have, and 405 for a method it does not take', async () => {
     assert.equal((await call('GET', '/nothing')).status, 404);
     assert.equal((await call('GET', '/tasks/abc')).status, 404);

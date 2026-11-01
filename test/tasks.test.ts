@@ -26,6 +26,16 @@ describe('the task list', () => {
     assert.equal(tasks.complete(99), undefined);
   });
 
+  it('marks a task not done, leaves one that is not done as it was, and says so when there is no such task', () => {
+    const tasks = new TaskList();
+    const { id } = tasks.add('Ship it');
+    tasks.complete(id);
+    assert.deepEqual(tasks.reopen(id), { id, title: 'Ship it', done: false });
+    assert.equal(tasks.get(id)?.done, false);
+    assert.deepEqual(tasks.reopen(id), { id, title: 'Ship it', done: false });
+    assert.equal(tasks.reopen(99), undefined);
+  });
+
   it('renames a task, and keeps its id and whether it is done', () => {
     const tasks = new TaskList();
     const { id } = tasks.add('Write the spec');
