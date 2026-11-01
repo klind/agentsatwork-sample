@@ -25,14 +25,16 @@ export class TaskList {
   /**
    * Every task, in the order they were added. Given `done`, only the tasks that are, or are not, done.
    * Given a non-empty `search`, only the tasks whose title contains it, ignoring case.
+   * Given `limit`, at most the first `limit` of those, after the other filters.
    */
-  all(done?: boolean, search?: string): Task[] {
+  all(done?: boolean, search?: string, limit?: number): Task[] {
     let tasks = [...this.tasks.values()];
     if (done !== undefined) tasks = tasks.filter((task) => task.done === done);
     if (search) {
       const wanted = search.toLowerCase();
       tasks = tasks.filter((task) => task.title.toLowerCase().includes(wanted));
     }
+    if (limit !== undefined) tasks = tasks.slice(0, limit);
     return tasks;
   }
 

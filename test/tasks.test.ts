@@ -140,6 +140,23 @@ describe('the task list', () => {
     assert.deepEqual(tasks.all(true, ''), tasks.all(true));
   });
 
+  it('lists at most the first limit tasks, after done and the search', () => {
+    const tasks = new TaskList();
+    const buy = tasks.add('Buy milk');
+    const cow = tasks.add('Milk the cow');
+    const walk = tasks.add('Walk the dog');
+    const feed = tasks.add('Feed the cow');
+    tasks.complete(cow.id);
+    tasks.complete(feed.id);
+
+    assert.deepEqual(tasks.all(undefined, undefined, 2).map((task) => task.id), [buy.id, cow.id]);
+    assert.deepEqual(tasks.all(undefined, undefined, 10), tasks.all());
+    assert.deepEqual(tasks.all(true, undefined, 1), [{ id: cow.id, title: 'Milk the cow', done: true }]);
+    assert.deepEqual(tasks.all(false, undefined, 1), [{ id: buy.id, title: 'Buy milk', done: false }]);
+    assert.deepEqual(tasks.all(undefined, 'the', 2).map((task) => task.id), [cow.id, walk.id]);
+    assert.deepEqual(tasks.all(true, 'cow', 1), [{ id: cow.id, title: 'Milk the cow', done: true }]);
+  });
+
   it('removes a task once', () => {
     const tasks = new TaskList();
     const { id } = tasks.add('Clean up');

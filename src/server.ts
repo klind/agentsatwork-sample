@@ -6,7 +6,8 @@ import { TaskList, ValidationError } from './tasks.ts';
  *
  *   GET    /health              is the server up
  *   GET    /tasks               every task, or with ?done=true or ?done=false only those that are or are not done,
- *                                and with ?q=... only those whose title contains it, ignoring case
+ *                                and with ?q=... only those whose title contains it, ignoring case,
+ *                                and with ?limit=n at most the first n of those
  *   POST   /tasks               add a task, body {"title": "..."}
  *   GET    /tasks/count         how many tasks, how many are done, and how many are not
  *   DELETE /tasks/done          remove every task that is done, and say how many
@@ -35,7 +36,7 @@ async function handle(tasks: TaskList, request: IncomingMessage, response: Serve
   if (parts[0] !== 'tasks') return send(response, 404, { error: 'not found' });
 
   if (parts.length === 1) {
-    if (method === 'GET') return send(response, 200, { tasks: tasks.all(doneFilter(searchParams), searchFilter(searchParams)) });
+    if (method === 'GET') return send(response, 200, { tasks: tasks.all(doneFilter(searchParams), searchFilter(searchParams), limitFilter(searchParams)) });
     if (method === 'POST') return send(response, 201, tasks.add((await body(request)).title));
     return send(response, 405, { error: 'method not allowed' });
   }
@@ -74,6 +75,15 @@ function doneFilter(searchParams: URLSearchParams): boolean | undefined {
 /** The `q` query parameter: undefined when it is absent or empty. */
 function searchFilter(searchParams: URLSearchParams): string | undefined {
   return searchParams.get('q') || undefined;
+}
+
+/** The `limit` query parameter: undefined when it is absent. Throws when it is not exactly one whole number above zero. */
+function limitFilter(searchParams: URLSearchParams): number | undefined {
+  const values = searchParams.getAll('limit');
+  if (values.length === 0) return undefined;
+  const [value] = values;
+  if (values.length === 1 && value !== undefined && /^\d+$/.test(value) && Number(value) >= 1) return Number(value);
+  throw new ValidationError('limit must be a whole number above zero');
 }
 
 async function body(request: IncomingMessage): Promise<Record<string, unknown>> {
