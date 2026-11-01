@@ -11,7 +11,7 @@ and in an adopter's first run. It is small on purpose, so a job is cheap and fas
 | GET | `/health` | Says the server is up |
 | GET | `/tasks` | Lists every task. Takes `?done=true` or `?done=false` to list only the tasks that are done, or only those that are not |
 | POST | `/tasks` | Adds a task, body `{"title": "..."}` |
-| GET | `/tasks/count` | Says how many tasks there are, and how many are done |
+| GET | `/tasks/count` | Says how many tasks there are, how many are done, and how many are not: `{"total": n, "done": d, "open": o}` |
 | DELETE | `/tasks/done` | Removes every task that is done, and says how many |
 | GET | `/tasks/:id` | Returns one task |
 | PATCH | `/tasks/:id` | Changes a task's title, body `{"title": "..."}` |
