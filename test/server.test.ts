@@ -308,9 +308,41 @@ describe('the HTTP API', () => {
       assert.deepEqual(await call('GET', '/tasks?limit=1&done=false&sort=title'), { status: 200, json: { tasks: notDone.slice(0, 1) } });
     });
 
-    it('answers 400 for any sort other than title', async () => {
-      const refused = { status: 400, json: { error: 'sort must be title' } };
-      for (const query of ['sort=name', 'sort=Title', 'sort=', 'sort', 'sort=-title', 'sort=title&sort=title']) {
+    it('lists the tasks sorted by title, Z to A, ignoring case, with ?sort=-title', async () => {
+      const sorted = await call('GET', '/tasks?sort=-title');
+      assert.equal(sorted.status, 200);
+      assert.deepEqual(mine(sorted.json), ['Date', 'Cherry', 'banana', 'apple']);
+      const titles = listed(sorted.json).map((task) => task.title.toLowerCase());
+      assert.ok(titles.every((title, index) => index === 0 || titles[index - 1]! >= title));
+    });
+
+    it('sorts what done leaves, Z to A', async () => {
+      assert.deepEqual(mine((await call('GET', '/tasks?sort=-title&done=true')).json), ['Cherry', 'apple']);
+      assert.deepEqual(mine((await call('GET', '/tasks?done=false&sort=-title')).json), ['Date', 'banana']);
+    });
+
+    it('takes limit after the sort, Z to A', async () => {
+      const sorted = listed((await call('GET', '/tasks?sort=-title')).json);
+      assert.ok(sorted.length > 2);
+      assert.deepEqual(await call('GET', '/tasks?sort=-title&limit=2'), { status: 200, json: { tasks: sorted.slice(0, 2) } });
+
+      const notDone = listed((await call('GET', '/tasks?sort=-title&done=false')).json);
+      assert.deepEqual(await call('GET', '/tasks?limit=1&done=false&sort=-title'), { status: 200, json: { tasks: notDone.slice(0, 1) } });
+    });
+
+    it('answers 400 for any sort other than title or -title', async () => {
+      const refused = { status: 400, json: { error: 'sort must be title or -title' } };
+      for (const query of [
+        'sort=name',
+        'sort=Title',
+        'sort=-Title',
+        'sort=desc',
+        'sort=',
+        'sort',
+        'sort=title&sort=title',
+        'sort=-title&sort=-title',
+        'sort=title&sort=-title',
+      ]) {
         assert.deepEqual(await call('GET', `/tasks?${query}`), refused, query);
       }
       assert.deepEqual(await call('GET', '/tasks?sort=name&limit=2'), refused);

@@ -182,6 +182,26 @@ describe('the task list', () => {
     const upper = tasks.add('Apple');
     const first = tasks.add('Aardvark');
     assert.deepEqual(tasks.all(undefined, undefined, undefined, 'title').map((task) => task.id), [first.id, lower.id, upper.id]);
+    assert.deepEqual(tasks.all(undefined, undefined, undefined, '-title').map((task) => task.id), [lower.id, upper.id, first.id]);
+  });
+
+  it('sorts the tasks by title, Z to A, ignoring case, after done and the search and before limit', () => {
+    const tasks = new TaskList();
+    const banana = tasks.add('banana');
+    const cherry = tasks.add('Cherry');
+    const apple = tasks.add('apple');
+    const date = tasks.add('Date');
+    tasks.complete(cherry.id);
+    tasks.complete(apple.id);
+
+    const titles = (listed: { title: string }[]) => listed.map((task) => task.title);
+    assert.deepEqual(titles(tasks.all(undefined, undefined, undefined, '-title')), ['Date', 'Cherry', 'banana', 'apple']);
+    assert.deepEqual(titles(tasks.all(true, undefined, undefined, '-title')), ['Cherry', 'apple']);
+    assert.deepEqual(titles(tasks.all(false, undefined, undefined, '-title')), ['Date', 'banana']);
+    assert.deepEqual(titles(tasks.all(undefined, 'a', undefined, '-title')), ['Date', 'banana', 'apple']);
+    assert.deepEqual(titles(tasks.all(undefined, undefined, 2, '-title')), ['Date', 'Cherry']);
+    assert.deepEqual(titles(tasks.all(false, undefined, 1, '-title')), ['Date']);
+    assert.deepEqual(tasks.all().map((task) => task.id), [banana.id, cherry.id, apple.id, date.id]);
   });
 
   it('removes a task once', () => {
