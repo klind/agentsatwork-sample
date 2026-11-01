@@ -143,6 +143,37 @@ describe('the HTTP API', () => {
     assert.deepEqual(await call('POST', '/tasks', 'not json'), { status: 400, json: { error: 'the body must be JSON' } });
   });
 
+  it('adds a task with a title of 200 characters, and refuses one of 201', async () => {
+    const { total } = (await call('GET', '/tasks/count')).json as { total: number };
+
+    const added = await call('POST', '/tasks', { title: 'a'.repeat(200) });
+    assert.equal(added.status, 201);
+    assert.equal(added.json!.title, 'a'.repeat(200));
+    assert.deepEqual(await call('POST', '/tasks', { title: 'a'.repeat(201) }), {
+      status: 400,
+      json: { error: 'title must be at most 200 characters' },
+    });
+    assert.equal(((await call('GET', '/tasks/count')).json as { total: number }).total, total + 1);
+
+    await call('DELETE', `/tasks/${added.json!.id as number}`);
+  });
+
+  it('renames a task to a title of 200 characters, and refuses 201, leaving it as it was', async () => {
+    const id = (await call('POST', '/tasks', { title: 'Keep me short' })).json!.id as number;
+
+    assert.deepEqual(await call('PATCH', `/tasks/${id}`, { title: 'b'.repeat(200) }), {
+      status: 200,
+      json: { id, title: 'b'.repeat(200), done: false },
+    });
+    assert.deepEqual(await call('PATCH', `/tasks/${id}`, { title: 'c'.repeat(201) }), {
+      status: 400,
+      json: { error: 'title must be at most 200 characters' },
+    });
+    assert.deepEqual((await call('GET', `/tasks/${id}`)).json, { id, title: 'b'.repeat(200), done: false });
+
+    await call('DELETE', `/tasks/${id}`);
+  });
+
   it('renames a task, and keeps its id and whether it is done', async () => {
     const id = (await call('POST', '/tasks', { title: 'Write the spec' })).json!.id as number;
 

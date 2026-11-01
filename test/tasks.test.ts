@@ -18,6 +18,15 @@ describe('the task list', () => {
     assert.equal(tasks.all().length, 0);
   });
 
+  it('accepts a title of 200 characters, and refuses one of 201', () => {
+    const tasks = new TaskList();
+    const first = tasks.add('a'.repeat(200));
+    assert.equal(first.title, 'a'.repeat(200));
+    assert.throws(() => tasks.add('a'.repeat(201)), new ValidationError('title must be at most 200 characters'));
+    assert.deepEqual(tasks.all(), [first]);
+    assert.deepEqual(tasks.add(`  ${'a'.repeat(200)}  `), { id: first.id + 1, title: 'a'.repeat(200), done: false });
+  });
+
   it('marks a task done, and says so when there is no such task', () => {
     const tasks = new TaskList();
     const { id } = tasks.add('Ship it');
@@ -63,6 +72,14 @@ describe('the task list', () => {
     assert.throws(() => tasks.rename(id, 42), ValidationError);
     assert.throws(() => tasks.rename(id, undefined), ValidationError);
     assert.equal(tasks.get(id)?.title, 'Write the spec');
+  });
+
+  it('renames a task to a title of 200 characters, and refuses 201, leaving it as it was', () => {
+    const tasks = new TaskList();
+    const { id } = tasks.add('Write the spec');
+    assert.deepEqual(tasks.rename(id, 'b'.repeat(200)), { id, title: 'b'.repeat(200), done: false });
+    assert.throws(() => tasks.rename(id, 'c'.repeat(201)), new ValidationError('title must be at most 200 characters'));
+    assert.equal(tasks.get(id)?.title, 'b'.repeat(200));
   });
 
   it('lists only the tasks that are done, or only those that are not, in order', () => {

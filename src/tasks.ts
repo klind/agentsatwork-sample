@@ -6,10 +6,15 @@ export interface Task {
 
 export class ValidationError extends Error {}
 
-/** The title as it is stored. Throws when it is not text, or is empty. */
+/** The most characters a title may have, after trimming. */
+const MAX_TITLE_LENGTH = 200;
+
+/** The title as it is stored. Throws when it is not text, is empty, or is longer than MAX_TITLE_LENGTH characters. */
 function checked(title: unknown): string {
   if (typeof title !== 'string' || title.trim() === '') throw new ValidationError('title must be text');
-  return title.trim();
+  const trimmed = title.trim();
+  if ([...trimmed].length > MAX_TITLE_LENGTH) throw new ValidationError(`title must be at most ${MAX_TITLE_LENGTH} characters`);
+  return trimmed;
 }
 
 /** The task list, kept in memory. One instance per server. */
@@ -28,7 +33,8 @@ export class TaskList {
   }
 
   add(title: unknown): Task {
-    const task: Task = { id: this.nextId++, title: checked(title), done: false };
+    const stored = checked(title);
+    const task: Task = { id: this.nextId++, title: stored, done: false };
     this.tasks.set(task.id, task);
     return task;
   }
