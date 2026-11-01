@@ -5,7 +5,7 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
-- `GET /tasks?q=milk` lists only the tasks whose title contains `milk`, ignoring case. It works together with `done`, and an empty `q` is the same as no `q`.
+- `GET /tasks?q=milk` lists only the tasks whose title contains `milk`, ignoring case. It works together with `done`, and an empty `q` is the same as no `q`. (#14)
 - `GET /tasks/count` also says how many tasks are not done, as `open`, which is always `total - done`. (#13)
 - No change to the API: CI also runs in the merge queue, so `main` can take its merges through one. (#12)
 - `POST /tasks` and `PATCH /tasks/:id` refuse a title longer than 200 characters after trimming: they answer 400 with `title must be at most 200 characters` and change nothing. (#11)
