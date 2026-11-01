@@ -40,21 +40,24 @@ describe('the HTTP API', () => {
     assert.equal((await call('GET', `/tasks/${id}`)).status, 404);
   });
 
-  it('counts the tasks, and the ones that are done', async () => {
+  it('counts the tasks, the ones that are done, and the ones that are open', async () => {
     const start = await call('GET', '/tasks/count');
     assert.equal(start.status, 200);
-    const { total, done } = start.json as { total: number; done: number };
+    const { total, done, open } = start.json as { total: number; done: number; open: number };
 
     const first = (await call('POST', '/tasks', { title: 'Count me' })).json!.id as number;
     const second = (await call('POST', '/tasks', { title: 'Count me too' })).json!.id as number;
-    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: total + 2, done } });
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: total + 2, done, open: open + 2 } });
 
     await call('POST', `/tasks/${first}/complete`);
-    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: total + 2, done: done + 1 } });
+    assert.deepEqual(await call('GET', '/tasks/count'), {
+      status: 200,
+      json: { total: total + 2, done: done + 1, open: open + 1 },
+    });
 
     await call('DELETE', `/tasks/${first}`);
     await call('DELETE', `/tasks/${second}`);
-    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total, done } });
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total, done, open } });
   });
 
   it('removes every task that is done, and keeps the rest', async () => {

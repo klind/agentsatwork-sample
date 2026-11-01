@@ -73,10 +73,10 @@ export class TaskList {
     return removed;
   }
 
-  /** How many tasks there are, and how many of them are done. */
-  count(): { total: number; done: number } {
+  /** How many tasks there are, how many of them are done, and how many are not. */
+  count(): { total: number; done: number; open: number } {
     let done = 0;
     for (const task of this.tasks.values()) if (task.done) done++;
-    return { total: this.tasks.size, done };
+    return { total: this.tasks.size, done, open: this.tasks.size - done };
   }
 }

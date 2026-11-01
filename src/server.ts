@@ -7,7 +7,7 @@ import { TaskList, ValidationError } from './tasks.ts';
  *   GET    /health              is the server up
  *   GET    /tasks               every task, or with ?done=true or ?done=false only those that are or are not done
  *   POST   /tasks               add a task, body {"title": "..."}
- *   GET    /tasks/count         how many tasks, and how many are done
+ *   GET    /tasks/count         how many tasks, how many are done, and how many are not
  *   DELETE /tasks/done          remove every task that is done, and say how many
  *   GET    /tasks/:id           one task
  *   PATCH  /tasks/:id           change a task's title, body {"title": "..."}
