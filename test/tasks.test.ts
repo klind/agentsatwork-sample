@@ -157,6 +157,33 @@ describe('the task list', () => {
     assert.deepEqual(tasks.all(true, 'cow', 1), [{ id: cow.id, title: 'Milk the cow', done: true }]);
   });
 
+  it('sorts the tasks by title, ignoring case, after done and the search and before limit', () => {
+    const tasks = new TaskList();
+    const banana = tasks.add('banana');
+    const cherry = tasks.add('Cherry');
+    const apple = tasks.add('apple');
+    const date = tasks.add('Date');
+    tasks.complete(cherry.id);
+    tasks.complete(apple.id);
+
+    const titles = (listed: { title: string }[]) => listed.map((task) => task.title);
+    assert.deepEqual(titles(tasks.all(undefined, undefined, undefined, 'title')), ['apple', 'banana', 'Cherry', 'Date']);
+    assert.deepEqual(titles(tasks.all(true, undefined, undefined, 'title')), ['apple', 'Cherry']);
+    assert.deepEqual(titles(tasks.all(false, undefined, undefined, 'title')), ['banana', 'Date']);
+    assert.deepEqual(titles(tasks.all(undefined, 'a', undefined, 'title')), ['apple', 'banana', 'Date']);
+    assert.deepEqual(titles(tasks.all(undefined, undefined, 2, 'title')), ['apple', 'banana']);
+    assert.deepEqual(titles(tasks.all(false, undefined, 1, 'title')), ['banana']);
+    assert.deepEqual(tasks.all().map((task) => task.id), [banana.id, cherry.id, apple.id, date.id]);
+  });
+
+  it('keeps the order tasks were added in when their titles differ only in case', () => {
+    const tasks = new TaskList();
+    const lower = tasks.add('apple');
+    const upper = tasks.add('Apple');
+    const first = tasks.add('Aardvark');
+    assert.deepEqual(tasks.all(undefined, undefined, undefined, 'title').map((task) => task.id), [first.id, lower.id, upper.id]);
+  });
+
   it('removes a task once', () => {
     const tasks = new TaskList();
     const { id } = tasks.add('Clean up');
