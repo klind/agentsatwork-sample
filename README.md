@@ -19,6 +19,9 @@ and in an adopter's first run. It is small on purpose, so a job is cheap and fas
 | POST | `/tasks/:id/reopen` | Marks a task not done |
 | DELETE | `/tasks/:id` | Removes a task |
 
+A title is at most 200 characters, after leading and trailing spaces are trimmed. Adding or
+renaming a task with a longer title answers 400 and changes nothing.
+
 ## Working on it
 
 Node 24 or newer. The source is TypeScript and runs as it is; there is no compile step.
