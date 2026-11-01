@@ -26,5 +26,5 @@ human_merge_paths: []
 # The names of the required checks come from the branch ruleset on GitHub.
 required_checks: { source: ruleset }
 
-auto_merge_label: llm-auto-merge
+auto_merge_label: auto-merge
 isolation: host
