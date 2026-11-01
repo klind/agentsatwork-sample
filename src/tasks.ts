@@ -22,10 +22,18 @@ export class TaskList {
   private readonly tasks = new Map<number, Task>();
   private nextId = 1;
 
-  /** Every task, in the order they were added. Given `done`, only the tasks that are, or are not, done. */
-  all(done?: boolean): Task[] {
-    const tasks = [...this.tasks.values()];
-    return done === undefined ? tasks : tasks.filter((task) => task.done === done);
+  /**
+   * Every task, in the order they were added. Given `done`, only the tasks that are, or are not, done.
+   * Given a non-empty `search`, only the tasks whose title contains it, ignoring case.
+   */
+  all(done?: boolean, search?: string): Task[] {
+    let tasks = [...this.tasks.values()];
+    if (done !== undefined) tasks = tasks.filter((task) => task.done === done);
+    if (search) {
+      const wanted = search.toLowerCase();
+      tasks = tasks.filter((task) => task.title.toLowerCase().includes(wanted));
+    }
+    return tasks;
   }
 
   get(id: number): Task | undefined {
