@@ -25,21 +25,23 @@ export class TaskList {
   /**
    * Every task, in the order they were added. Given `done`, only the tasks that are, or are not, done.
    * Given a non-empty `search`, only the tasks whose title contains it, ignoring case.
-   * Given `sort` of `'title'`, those sorted by title, A to Z, ignoring case; tasks with the same title keep their order.
+   * Given `sort` of `'title'`, those sorted by title, A to Z, ignoring case, and of `'-title'`, Z to A;
+   * either way, tasks with the same title keep their order.
    * Given `limit`, at most the first `limit` of those, after the other filters and the sort.
    */
-  all(done?: boolean, search?: string, limit?: number, sort?: 'title'): Task[] {
+  all(done?: boolean, search?: string, limit?: number, sort?: 'title' | '-title'): Task[] {
     let tasks = [...this.tasks.values()];
     if (done !== undefined) tasks = tasks.filter((task) => task.done === done);
     if (search) {
       const wanted = search.toLowerCase();
       tasks = tasks.filter((task) => task.title.toLowerCase().includes(wanted));
     }
-    if (sort === 'title') {
+    if (sort !== undefined) {
+      const direction = sort === 'title' ? 1 : -1;
       tasks.sort((a, b) => {
         const left = a.title.toLowerCase();
         const right = b.title.toLowerCase();
-        return left < right ? -1 : left > right ? 1 : 0;
+        return left < right ? -direction : left > right ? direction : 0;
       });
     }
     if (limit !== undefined) tasks = tasks.slice(0, limit);

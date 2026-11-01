@@ -7,7 +7,7 @@ import { TaskList, ValidationError } from './tasks.ts';
  *   GET    /health              is the server up
  *   GET    /tasks               every task, or with ?done=true or ?done=false only those that are or are not done,
  *                                and with ?q=... only those whose title contains it, ignoring case,
- *                                and with ?sort=title sorted by title, A to Z, ignoring case,
+ *                                and with ?sort=title sorted by title, A to Z, ignoring case, or with ?sort=-title Z to A,
  *                                and with ?limit=n at most the first n of those, after the sort
  *   POST   /tasks               add a task, body {"title": "..."}
  *   GET    /tasks/count         how many tasks, how many are done, and how many are not
@@ -87,12 +87,13 @@ function limitFilter(searchParams: URLSearchParams): number | undefined {
   throw new ValidationError('limit must be a whole number above zero');
 }
 
-/** The `sort` query parameter: undefined when it is absent. Throws when it is not exactly one `title`. */
-function sortOrder(searchParams: URLSearchParams): 'title' | undefined {
+/** The `sort` query parameter: undefined when it is absent. Throws when it is not exactly one `title` or `-title`. */
+function sortOrder(searchParams: URLSearchParams): 'title' | '-title' | undefined {
   const values = searchParams.getAll('sort');
   if (values.length === 0) return undefined;
   if (values.length === 1 && values[0] === 'title') return 'title';
-  throw new ValidationError('sort must be title');
+  if (values.length === 1 && values[0] === '-title') return '-title';
+  throw new ValidationError('sort must be title or -title');
 }
 
 async function body(request: IncomingMessage): Promise<Record<string, unknown>> {
