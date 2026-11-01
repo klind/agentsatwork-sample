@@ -101,6 +101,25 @@ describe('the task list', () => {
     assert.deepEqual(tasks.all().map((task) => task.id), [first.id, second.id, third.id]);
   });
 
+  it('lists only the tasks whose title contains the search, ignoring case, and with done', () => {
+    const tasks = new TaskList();
+    const buy = tasks.add('Buy milk');
+    const cow = tasks.add('Milk the cow');
+    const walk = tasks.add('Walk the dog');
+    tasks.complete(cow.id);
+
+    const both = [
+      { id: buy.id, title: 'Buy milk', done: false },
+      { id: cow.id, title: 'Milk the cow', done: true },
+    ];
+    assert.deepEqual(tasks.all(undefined, 'milk'), both);
+    assert.deepEqual(tasks.all(undefined, 'MILK'), both);
+    assert.deepEqual(tasks.all(undefined, 'zebra'), []);
+    assert.deepEqual(tasks.all(false, 'milk'), [{ id: buy.id, title: 'Buy milk', done: false }]);
+    assert.deepEqual(tasks.all(true, 'milk'), [{ id: cow.id, title: 'Milk the cow', done: true }]);
+    assert.deepEqual(tasks.all(undefined, '').map((task) => task.id), [buy.id, cow.id, walk.id]);
+  });
+
   it('removes a task once', () => {
     const tasks = new TaskList();
     const { id } = tasks.add('Clean up');

@@ -141,6 +141,63 @@ describe('the HTTP API', () => {
     });
   });
 
+  describe('searching tasks by title', () => {
+    let buy: number;
+    let cow: number;
+    let walk: number;
+
+    before(async () => {
+      buy = (await call('POST', '/tasks', { title: 'Buy milk' })).json!.id as number;
+      cow = (await call('POST', '/tasks', { title: 'Milk the cow' })).json!.id as number;
+      walk = (await call('POST', '/tasks', { title: 'Walk the dog' })).json!.id as number;
+      await call('POST', `/tasks/${cow}/complete`);
+    });
+
+    after(async () => {
+      for (const id of [buy, cow, walk]) await call('DELETE', `/tasks/${id}`);
+    });
+
+    const mine = (json: Record<string, unknown> | undefined) =>
+      (json!.tasks as { id: number }[]).filter((task) => [buy, cow, walk].includes(task.id));
+
+    it('lists only the tasks whose title contains q', async () => {
+      const listed = await call('GET', '/tasks?q=milk');
+      assert.equal(listed.status, 200);
+      assert.ok((listed.json!.tasks as { title: string }[]).every((task) => task.title.toLowerCase().includes('milk')));
+      assert.deepEqual(mine(listed.json), [
+        { id: buy, title: 'Buy milk', done: false },
+        { id: cow, title: 'Milk the cow', done: true },
+      ]);
+    });
+
+    it('lists nothing when no title contains q', async () => {
+      assert.deepEqual(await call('GET', '/tasks?q=zebra'), { status: 200, json: { tasks: [] } });
+    });
+
+    it('ignores case', async () => {
+      const listed = await call('GET', '/tasks?q=MILK');
+      assert.equal(listed.status, 200);
+      assert.deepEqual(mine(listed.json), [
+        { id: buy, title: 'Buy milk', done: false },
+        { id: cow, title: 'Milk the cow', done: true },
+      ]);
+    });
+
+    it('takes q together with done', async () => {
+      assert.deepEqual(mine((await call('GET', '/tasks?q=milk&done=false')).json), [{ id: buy, title: 'Buy milk', done: false }]);
+      assert.deepEqual(mine((await call('GET', '/tasks?q=milk&done=true')).json), [{ id: cow, title: 'Milk the cow', done: true }]);
+    });
+
+    it('lists every task with an empty q', async () => {
+      assert.deepEqual(await call('GET', '/tasks?q='), await call('GET', '/tasks'));
+      assert.deepEqual(mine((await call('GET', '/tasks?q=')).json).map((task) => task.id), [buy, cow, walk]);
+    });
+
+    it('still answers 400 for a bad done with q', async () => {
+      assert.deepEqual(await call('GET', '/tasks?q=milk&done=yes'), { status: 400, json: { error: 'done must be true or false' } });
+    });
+  });
+
   it('refuses a task without a title, and a body that is not JSON', async () => {
     assert.deepEqual(await call('POST', '/tasks', { title: '' }), { status: 400, json: { error: 'title must be text' } });
     assert.deepEqual(await call('POST', '/tasks', 'not json'), { status: 400, json: { error: 'the body must be JSON' } });
