@@ -261,6 +261,62 @@ describe('the HTTP API', () => {
     });
   });
 
+  describe('sorting the task list by title', () => {
+    let banana: number;
+    let cherry: number;
+    let apple: number;
+    let date: number;
+
+    before(async () => {
+      banana = (await call('POST', '/tasks', { title: 'banana' })).json!.id as number;
+      cherry = (await call('POST', '/tasks', { title: 'Cherry' })).json!.id as number;
+      apple = (await call('POST', '/tasks', { title: 'apple' })).json!.id as number;
+      date = (await call('POST', '/tasks', { title: 'Date' })).json!.id as number;
+      await call('POST', `/tasks/${cherry}/complete`);
+      await call('POST', `/tasks/${apple}/complete`);
+    });
+
+    after(async () => {
+      for (const id of [banana, cherry, apple, date]) await call('DELETE', `/tasks/${id}`);
+    });
+
+    const listed = (json: Record<string, unknown> | undefined) => json!.tasks as { id: number; title: string; done: boolean }[];
+    const mine = (json: Record<string, unknown> | undefined) =>
+      listed(json)
+        .filter((task) => [banana, cherry, apple, date].includes(task.id))
+        .map((task) => task.title);
+
+    it('lists the tasks sorted by title, A to Z, ignoring case, with ?sort=title', async () => {
+      const sorted = await call('GET', '/tasks?sort=title');
+      assert.equal(sorted.status, 200);
+      assert.deepEqual(mine(sorted.json), ['apple', 'banana', 'Cherry', 'Date']);
+      const titles = listed(sorted.json).map((task) => task.title.toLowerCase());
+      assert.ok(titles.every((title, index) => index === 0 || titles[index - 1]! <= title));
+    });
+
+    it('sorts what done leaves', async () => {
+      assert.deepEqual(mine((await call('GET', '/tasks?sort=title&done=true')).json), ['apple', 'Cherry']);
+      assert.deepEqual(mine((await call('GET', '/tasks?done=false&sort=title')).json), ['banana', 'Date']);
+    });
+
+    it('takes limit after the sort', async () => {
+      const sorted = listed((await call('GET', '/tasks?sort=title')).json);
+      assert.ok(sorted.length > 2);
+      assert.deepEqual(await call('GET', '/tasks?sort=title&limit=2'), { status: 200, json: { tasks: sorted.slice(0, 2) } });
+
+      const notDone = listed((await call('GET', '/tasks?sort=title&done=false')).json);
+      assert.deepEqual(await call('GET', '/tasks?limit=1&done=false&sort=title'), { status: 200, json: { tasks: notDone.slice(0, 1) } });
+    });
+
+    it('answers 400 for any sort other than title', async () => {
+      const refused = { status: 400, json: { error: 'sort must be title' } };
+      for (const query of ['sort=name', 'sort=Title', 'sort=', 'sort', 'sort=-title', 'sort=title&sort=title']) {
+        assert.deepEqual(await call('GET', `/tasks?${query}`), refused, query);
+      }
+      assert.deepEqual(await call('GET', '/tasks?sort=name&limit=2'), refused);
+    });
+  });
+
   it('refuses a task without a title, and a body that is not JSON', async () => {
     assert.deepEqual(await call('POST', '/tasks', { title: '' }), { status: 400, json: { error: 'title must be text' } });
     assert.deepEqual(await call('POST', '/tasks', 'not json'), { status: 400, json: { error: 'the body must be JSON' } });

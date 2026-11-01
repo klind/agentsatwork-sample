@@ -7,7 +7,8 @@ import { TaskList, ValidationError } from './tasks.ts';
  *   GET    /health              is the server up
  *   GET    /tasks               every task, or with ?done=true or ?done=false only those that are or are not done,
  *                                and with ?q=... only those whose title contains it, ignoring case,
- *                                and with ?limit=n at most the first n of those
+ *                                and with ?sort=title sorted by title, A to Z, ignoring case,
+ *                                and with ?limit=n at most the first n of those, after the sort
  *   POST   /tasks               add a task, body {"title": "..."}
  *   GET    /tasks/count         how many tasks, how many are done, and how many are not
  *   DELETE /tasks/done          remove every task that is done, and say how many
@@ -36,7 +37,7 @@ async function handle(tasks: TaskList, request: IncomingMessage, response: Serve
   if (parts[0] !== 'tasks') return send(response, 404, { error: 'not found' });
 
   if (parts.length === 1) {
-    if (method === 'GET') return send(response, 200, { tasks: tasks.all(doneFilter(searchParams), searchFilter(searchParams), limitFilter(searchParams)) });
+    if (method === 'GET') return send(response, 200, { tasks: tasks.all(doneFilter(searchParams), searchFilter(searchParams), limitFilter(searchParams), sortOrder(searchParams)) });
     if (method === 'POST') return send(response, 201, tasks.add((await body(request)).title));
     return send(response, 405, { error: 'method not allowed' });
   }
@@ -84,6 +85,14 @@ function limitFilter(searchParams: URLSearchParams): number | undefined {
   const [value] = values;
   if (values.length === 1 && value !== undefined && /^\d+$/.test(value) && Number(value) >= 1) return Number(value);
   throw new ValidationError('limit must be a whole number above zero');
+}
+
+/** The `sort` query parameter: undefined when it is absent. Throws when it is not exactly one `title`. */
+function sortOrder(searchParams: URLSearchParams): 'title' | undefined {
+  const values = searchParams.getAll('sort');
+  if (values.length === 0) return undefined;
+  if (values.length === 1 && values[0] === 'title') return 'title';
+  throw new ValidationError('sort must be title');
 }
 
 async function body(request: IncomingMessage): Promise<Record<string, unknown>> {

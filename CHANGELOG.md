@@ -5,6 +5,7 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
+- `GET /tasks?sort=title` lists the tasks sorted by title, A to Z, ignoring case. It sorts what `done` and `q` leave, and `limit` takes the first ones after sorting. Any other `sort` answers 400 with `sort must be title`. (#16)
 - `GET /tasks?limit=2` lists at most the first two tasks, in the usual order. It applies after `done` and `q`. A `limit` that is not a whole number above zero answers 400 with `limit must be a whole number above zero`. (#15)
 - `GET /tasks?q=milk` lists only the tasks whose title contains `milk`, ignoring case. It works together with `done`, and an empty `q` is the same as no `q`. (#14)
 - `GET /tasks/count` also says how many tasks are not done, as `open`, which is always `total - done`. (#13)

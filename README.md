@@ -9,7 +9,7 @@ and in an adopter's first run. It is small on purpose, so a job is cheap and fas
 | Method | Path | What it does |
 |---|---|---|
 | GET | `/health` | Says the server is up |
-| GET | `/tasks` | Lists every task. Takes `?done=true` or `?done=false` to list only the tasks that are done, or only those that are not. Takes `?q=...` to list only the tasks whose title contains it, ignoring case; it works together with `done`, and an empty `q` is ignored. Takes `?limit=n` to list at most the first `n` of those, after `done` and `q`; a `limit` that is not a whole number above zero answers 400 |
+| GET | `/tasks` | Lists every task. Takes `?done=true` or `?done=false` to list only the tasks that are done, or only those that are not. Takes `?q=...` to list only the tasks whose title contains it, ignoring case; it works together with `done`, and an empty `q` is ignored. Takes `?sort=title` to sort those by title, A to Z, ignoring case; any other `sort` answers 400. Takes `?limit=n` to list at most the first `n` of those, after `done`, `q`, and `sort`; a `limit` that is not a whole number above zero answers 400 |
 | POST | `/tasks` | Adds a task, body `{"title": "..."}` |
 | GET | `/tasks/count` | Says how many tasks there are, how many are done, and how many are not: `{"total": n, "done": d, "open": o}` |
 | DELETE | `/tasks/done` | Removes every task that is done, and says how many |
