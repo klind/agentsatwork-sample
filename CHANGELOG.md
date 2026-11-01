@@ -5,6 +5,7 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
+- No change to the API: AgentsAtWork marks a pull request it may merge by itself with the label `auto-merge`. (#9)
 - `GET /tasks?done=true` or `?done=false` lists only the tasks that are done, or only those that are not. Any other value of `done` answers 400. (#8)
 - `DELETE /tasks/done` removes every task that is done, and says how many it removed. (#6)
 - `PATCH /tasks/:id` renames a task, body `{"title": "..."}`, and answers with the task. (#5) (#7)
