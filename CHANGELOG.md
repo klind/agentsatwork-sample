@@ -5,8 +5,7 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
-- `POST /tasks` and `PATCH /tasks/:id` refuse a title longer than 200 characters after trimming: they answer 400 with `title must be at most 200 characters` and change nothing.
-
+- `POST /tasks` and `PATCH /tasks/:id` refuse a title longer than 200 characters after trimming: they answer 400 with `title must be at most 200 characters` and change nothing. (#11)
 - `POST /tasks/:id/reopen` marks a task that is done as not done, and answers with the task. A task that is not done is answered unchanged; an unknown id answers 404. (#10)
 - No change to the API: AgentsAtWork marks a pull request it may merge by itself with the label `auto-merge`. (#9)
 - `GET /tasks?done=true` or `?done=false` lists only the tasks that are done, or only those that are not. Any other value of `done` answers 400. (#8)
