@@ -17,6 +17,14 @@ commands:
 # This repository has no database.
 migrations: { enabled: false }
 
+# How the coverage gate measures: Node's own test runner writes an LCOV report of the source files,
+# leaving out the tests themselves.
+coverage:
+  enabled: true
+  command: mkdir -p coverage && node --test --experimental-test-coverage --test-coverage-exclude='test/**' --test-reporter=lcov --test-reporter-destination=coverage/lcov.info "test/**/*.test.ts"
+  report: coverage/lcov.info
+  format: lcov
+
 # Changes here are rejected before review.
 protected_paths: [".github/workflows/"]
 

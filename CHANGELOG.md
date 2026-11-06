@@ -5,6 +5,7 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
+- No change to the API: `.agentsatwork.yml` tells AgentsAtWork how to measure test coverage. (#18)
 - `GET /tasks?sort=-title` lists the tasks sorted by title, Z to A, ignoring case. It works with `done`, `q`, and `limit` the same way `sort=title` does. Any other `sort` now answers 400 with `sort must be title or -title`. (#17)
 - `GET /tasks?sort=title` lists the tasks sorted by title, A to Z, ignoring case. It sorts what `done` and `q` leave, and `limit` takes the first ones after sorting. Any other `sort` answers 400 with `sort must be title`. (#16)
 - `GET /tasks?limit=2` lists at most the first two tasks, in the usual order. It applies after `done` and `q`. A `limit` that is not a whole number above zero answers 400 with `limit must be a whole number above zero`. (#15)
