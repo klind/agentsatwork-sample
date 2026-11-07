@@ -515,6 +515,47 @@ describe('the HTTP API', () => {
     assert.deepEqual(await call('GET', '/tasks/complete-all'), { status: 404, json: { error: 'not found' } });
   });
 
+  it('answers with the open task that was added first, the same as GET /tasks/:id', async () => {
+    await call('DELETE', '/tasks');
+    const first = (await call('POST', '/tasks', { title: 'Done first' })).json!.id as number;
+    const second = (await call('POST', '/tasks', { title: 'Open second' })).json!.id as number;
+    const third = (await call('POST', '/tasks', { title: 'Open third' })).json!.id as number;
+    await call('POST', `/tasks/${first}/complete`);
+
+    const oldest = await call('GET', '/tasks/oldest');
+    assert.deepEqual(oldest, { status: 200, json: { id: second, title: 'Open second', done: false } });
+    assert.deepEqual(oldest, await call('GET', `/tasks/${second}`));
+
+    await call('POST', `/tasks/${second}/complete`);
+    assert.deepEqual(await call('GET', '/tasks/oldest'), { status: 200, json: { id: third, title: 'Open third', done: false } });
+
+    await call('DELETE', '/tasks');
+  });
+
+  it('answers 404 with no open task when every task is done, or there are none', async () => {
+    await call('DELETE', '/tasks');
+    const none = { status: 404, json: { error: 'no open task' } };
+    assert.deepEqual(await call('GET', '/tasks/oldest'), none);
+
+    const id = (await call('POST', '/tasks', { title: 'Done already' })).json!.id as number;
+    await call('POST', `/tasks/${id}/complete`);
+    assert.deepEqual(await call('GET', '/tasks/oldest'), none);
+
+    await call('DELETE', '/tasks');
+  });
+
+  it('answers 404 for oldest with a method other than GET, and changes nothing', async () => {
+    await call('DELETE', '/tasks');
+    const id = (await call('POST', '/tasks', { title: 'Keep me' })).json!.id as number;
+
+    for (const method of ['POST', 'DELETE', 'PATCH']) {
+      assert.deepEqual(await call(method, '/tasks/oldest'), { status: 404, json: { error: 'not found' } }, method);
+    }
+    assert.deepEqual(await call('GET', '/tasks'), { status: 200, json: { tasks: [{ id, title: 'Keep me', done: false }] } });
+
+    await call('DELETE', '/tasks');
+  });
+
   it('answers 404 for what it does not have, and 405 for a method it does not take', async () => {
     assert.equal((await call('GET', '/nothing')).status, 404);
     assert.equal((await call('GET', '/tasks/abc')).status, 404);
