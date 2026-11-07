@@ -25,6 +25,9 @@ describe('the HTTP API', () => {
     return { status: response.status, json: text === '' ? undefined : (JSON.parse(text) as Record<string, unknown>) };
   };
 
+  /** The share of `total` that `done` is, as a whole percentage rounded down, and 0 when `total` is 0. */
+  const percent = (done: number, total: number) => (total === 0 ? 0 : Math.floor((done * 100) / total));
+
   it('answers the health check', async () => {
     assert.deepEqual(await call('GET', '/health'), { status: 200, json: { status: 'ok' } });
   });
@@ -43,21 +46,25 @@ describe('the HTTP API', () => {
   it('counts the tasks, the ones that are done, and the ones that are open', async () => {
     const start = await call('GET', '/tasks/count');
     assert.equal(start.status, 200);
-    const { total, done, open } = start.json as { total: number; done: number; open: number };
+    const { total, done, open, donePercent } = start.json as { total: number; done: number; open: number; donePercent: number };
+    assert.equal(donePercent, percent(done, total));
 
     const first = (await call('POST', '/tasks', { title: 'Count me' })).json!.id as number;
     const second = (await call('POST', '/tasks', { title: 'Count me too' })).json!.id as number;
-    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: total + 2, done, open: open + 2 } });
+    assert.deepEqual(await call('GET', '/tasks/count'), {
+      status: 200,
+      json: { total: total + 2, done, open: open + 2, donePercent: percent(done, total + 2) },
+    });
 
     await call('POST', `/tasks/${first}/complete`);
     assert.deepEqual(await call('GET', '/tasks/count'), {
       status: 200,
-      json: { total: total + 2, done: done + 1, open: open + 1 },
+      json: { total: total + 2, done: done + 1, open: open + 1, donePercent: percent(done + 1, total + 2) },
     });
 
     await call('DELETE', `/tasks/${first}`);
     await call('DELETE', `/tasks/${second}`);
-    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total, done, open } });
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total, done, open, donePercent } });
   });
 
   it('removes every task that is done, and keeps the rest', async () => {
@@ -101,6 +108,24 @@ describe('the HTTP API', () => {
   it('answers removed 0 when there are no tasks', async () => {
     await call('DELETE', '/tasks');
     assert.deepEqual(await call('DELETE', '/tasks'), { status: 200, json: { removed: 0 } });
+  });
+
+  it('says what share of the tasks are done, as a whole percentage rounded down, and 0 with none', async () => {
+    await call('DELETE', '/tasks');
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: 0, done: 0, open: 0, donePercent: 0 } });
+
+    const ids: number[] = [];
+    for (const title of ['One', 'Two', 'Three']) ids.push((await call('POST', '/tasks', { title })).json!.id as number);
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: 3, done: 0, open: 3, donePercent: 0 } });
+
+    await call('POST', `/tasks/${ids[0]}/complete`);
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: 3, done: 1, open: 2, donePercent: 33 } });
+    await call('POST', `/tasks/${ids[1]}/complete`);
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: 3, done: 2, open: 1, donePercent: 66 } });
+    await call('POST', `/tasks/${ids[2]}/complete`);
+    assert.deepEqual(await call('GET', '/tasks/count'), { status: 200, json: { total: 3, done: 3, open: 0, donePercent: 100 } });
+
+    await call('DELETE', '/tasks');
   });
 
   describe('listing tasks by whether they are done', () => {
@@ -225,16 +250,19 @@ describe('the HTTP API', () => {
       assert.deepEqual(await call('GET', '/tasks?q=&done=true'), await call('GET', '/tasks?done=true'));
     });
 
-    it('counts only the tasks whose title contains q, in total, done, and open alike', async () => {
+    it('counts only the tasks whose title contains q, in total, done, open, and donePercent alike', async () => {
       const listed = (await call('GET', '/tasks?q=milk')).json!.tasks as { done: boolean }[];
       const done = listed.filter((task) => task.done).length;
       const counted = await call('GET', '/tasks/count?q=milk');
-      assert.deepEqual(counted, { status: 200, json: { total: listed.length, done, open: listed.length - done } });
+      assert.deepEqual(counted, {
+        status: 200,
+        json: { total: listed.length, done, open: listed.length - done, donePercent: percent(done, listed.length) },
+      });
       assert.ok(listed.length >= 2 && done >= 1 && listed.length - done >= 1);
 
       assert.deepEqual(await call('GET', '/tasks/count?q=MILK'), counted);
       assert.deepEqual(await call('GET', '/tasks/count?q=mil'), counted);
-      assert.deepEqual(await call('GET', '/tasks/count?q=zebra'), { status: 200, json: { total: 0, done: 0, open: 0 } });
+      assert.deepEqual(await call('GET', '/tasks/count?q=zebra'), { status: 200, json: { total: 0, done: 0, open: 0, donePercent: 0 } });
     });
 
     it('counts every task with an empty q', async () => {

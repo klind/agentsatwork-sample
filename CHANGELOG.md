@@ -5,6 +5,8 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
+- `GET /tasks/count` also says what share of the tasks are done, as `donePercent`: a whole number from 0 to 100, rounded down, so 2 done out of 3 is 66. With no tasks it is 0. With `q` it counts only the tasks whose title contains it, like the other numbers. (#29)
+
 - `GET /tasks/oldest` answers 200 with the task that is not done and was added first, in the same shape as `GET /tasks/:id`. Renaming or reopening a task does not change when it was added. When every task is done, or there are none, it answers 404 with `no open task`. (#27)
 - `GET /tasks/count?q=milk` counts only the tasks whose title contains `milk`, ignoring case, in `total`, `done`, and `open` alike. An empty `q` is the same as no `q`. (#25)
 - `DELETE /tasks` removes every task, done or not, and answers 200 with how many it removed, as `removed`. An empty list answers `{"removed": 0}`. Before, `DELETE /tasks` answered 405. (#23)

@@ -11,7 +11,7 @@ import { TaskList, ValidationError } from './tasks.ts';
  *                                and with ?limit=n at most the first n of those, after the sort
  *   POST   /tasks               add a task, body {"title": "..."}
  *   DELETE /tasks               remove every task, done or not, and say how many
- *   GET    /tasks/count         how many tasks, how many are done, and how many are not,
+ *   GET    /tasks/count         how many tasks, how many are done, how many are not, and the share done as a percentage,
  *                                and with ?q=... counting only those whose title contains it, ignoring case
  *   GET    /tasks/oldest        the task that is not done and was added first
  *   DELETE /tasks/done          remove every task that is done, and say how many

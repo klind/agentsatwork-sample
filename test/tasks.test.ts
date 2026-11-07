@@ -250,7 +250,7 @@ describe('the task list', () => {
 
     assert.equal(tasks.removeDone(), 2);
     assert.deepEqual(tasks.all(), [{ id: second.id, title: 'Review it', done: false }]);
-    assert.deepEqual(tasks.count(), { total: 1, done: 0, open: 1 });
+    assert.deepEqual(tasks.count(), { total: 1, done: 0, open: 1, donePercent: 0 });
     assert.equal(tasks.add('Celebrate').id, third.id + 1);
   });
 
@@ -276,7 +276,7 @@ describe('the task list', () => {
 
     assert.equal(tasks.removeAll(), 3);
     assert.deepEqual(tasks.all(), []);
-    assert.deepEqual(tasks.count(), { total: 0, done: 0, open: 0 });
+    assert.deepEqual(tasks.count(), { total: 0, done: 0, open: 0, donePercent: 0 });
     for (const { id } of [first, second, third]) assert.equal(tasks.get(id), undefined);
     assert.deepEqual(tasks.add('Celebrate'), { id: third.id + 1, title: 'Celebrate', done: false });
   });
@@ -303,7 +303,7 @@ describe('the task list', () => {
       { id: second.id, title: 'Review it', done: true },
       { id: third.id, title: 'Ship it', done: true },
     ]);
-    assert.deepEqual(tasks.count(), { total: 3, done: 3, open: 0 });
+    assert.deepEqual(tasks.count(), { total: 3, done: 3, open: 0, donePercent: 100 });
     assert.deepEqual(tasks.add('Celebrate'), { id: third.id + 1, title: 'Celebrate', done: false });
   });
 
@@ -363,18 +363,18 @@ describe('the task list', () => {
 
   it('counts the tasks, and the ones that are done', () => {
     const tasks = new TaskList();
-    assert.deepEqual(tasks.count(), { total: 0, done: 0, open: 0 });
+    assert.deepEqual(tasks.count(), { total: 0, done: 0, open: 0, donePercent: 0 });
 
     const { id } = tasks.add('Write the spec');
     tasks.add('Review it');
     tasks.add('Ship it');
-    assert.deepEqual(tasks.count(), { total: 3, done: 0, open: 3 });
+    assert.deepEqual(tasks.count(), { total: 3, done: 0, open: 3, donePercent: 0 });
 
     tasks.complete(id);
-    assert.deepEqual(tasks.count(), { total: 3, done: 1, open: 2 });
+    assert.deepEqual(tasks.count(), { total: 3, done: 1, open: 2, donePercent: 33 });
 
     tasks.remove(id);
-    assert.deepEqual(tasks.count(), { total: 2, done: 0, open: 2 });
+    assert.deepEqual(tasks.count(), { total: 2, done: 0, open: 2, donePercent: 0 });
   });
 
   it('counts the tasks that are not done as open', () => {
@@ -383,7 +383,57 @@ describe('the task list', () => {
     tasks.add('Review it');
     tasks.add('Ship it');
     tasks.complete(id);
-    assert.deepEqual(tasks.count(), { total: 3, done: 1, open: 2 });
+    assert.deepEqual(tasks.count(), { total: 3, done: 1, open: 2, donePercent: 33 });
+  });
+
+  it('says what share of the tasks are done, as a whole percentage rounded down', () => {
+    const tasks = new TaskList();
+    assert.equal(tasks.count().donePercent, 0);
+
+    const ids = ['One', 'Two', 'Three'].map((title) => tasks.add(title).id);
+    assert.equal(tasks.count().donePercent, 0);
+    tasks.complete(ids[0]!);
+    assert.equal(tasks.count().donePercent, 33);
+    tasks.complete(ids[1]!);
+    assert.equal(tasks.count().donePercent, 66);
+    tasks.complete(ids[2]!);
+    assert.equal(tasks.count().donePercent, 100);
+
+    tasks.add('Four');
+    assert.equal(tasks.count().donePercent, 75);
+    tasks.reopen(ids[0]!);
+    assert.equal(tasks.count().donePercent, 50);
+
+    tasks.add('Five');
+    tasks.add('Six');
+    assert.equal(tasks.count().donePercent, 33);
+    tasks.reopen(ids[1]!);
+    assert.equal(tasks.count().donePercent, 16);
+    tasks.completeAll();
+    tasks.reopen(ids[2]!);
+    assert.equal(tasks.count().donePercent, 83);
+
+    tasks.removeDone();
+    assert.equal(tasks.count().donePercent, 0);
+    tasks.removeAll();
+    assert.equal(tasks.count().donePercent, 0);
+  });
+
+  it('works out the share done over only the tasks that match the search', () => {
+    const tasks = new TaskList();
+    tasks.add('Buy milk');
+    const cow = tasks.add('Milk the cow');
+    const dog = tasks.add('Walk the dog');
+    tasks.add('Feed the cat');
+    tasks.complete(cow.id);
+    tasks.complete(dog.id);
+
+    assert.equal(tasks.count().donePercent, 50);
+    assert.deepEqual(tasks.count('milk'), { total: 2, done: 1, open: 1, donePercent: 50 });
+    assert.equal(tasks.count('walk').donePercent, 100);
+    assert.equal(tasks.count('feed').donePercent, 0);
+    assert.equal(tasks.count('zebra').donePercent, 0);
+    assert.deepEqual(tasks.count(''), tasks.count());
   });
 
   it('counts only the tasks whose title contains the search, ignoring case', () => {
@@ -393,23 +443,23 @@ describe('the task list', () => {
     tasks.add('Walk the dog');
     tasks.complete(cow.id);
 
-    assert.deepEqual(tasks.count('milk'), { total: 2, done: 1, open: 1 });
-    assert.deepEqual(tasks.count('MILK'), { total: 2, done: 1, open: 1 });
-    assert.deepEqual(tasks.count('mil'), { total: 2, done: 1, open: 1 });
-    assert.deepEqual(tasks.count('walk'), { total: 1, done: 0, open: 1 });
-    assert.deepEqual(tasks.count('zebra'), { total: 0, done: 0, open: 0 });
+    assert.deepEqual(tasks.count('milk'), { total: 2, done: 1, open: 1, donePercent: 50 });
+    assert.deepEqual(tasks.count('MILK'), { total: 2, done: 1, open: 1, donePercent: 50 });
+    assert.deepEqual(tasks.count('mil'), { total: 2, done: 1, open: 1, donePercent: 50 });
+    assert.deepEqual(tasks.count('walk'), { total: 1, done: 0, open: 1, donePercent: 0 });
+    assert.deepEqual(tasks.count('zebra'), { total: 0, done: 0, open: 0, donePercent: 0 });
   });
 
   it('counts every task with an empty search, the same as with no search', () => {
     const tasks = new TaskList();
-    assert.deepEqual(tasks.count(''), { total: 0, done: 0, open: 0 });
+    assert.deepEqual(tasks.count(''), { total: 0, done: 0, open: 0, donePercent: 0 });
 
     tasks.add('Buy milk');
     const cow = tasks.add('Milk the cow');
     tasks.add('Walk the dog');
     tasks.complete(cow.id);
 
-    assert.deepEqual(tasks.count(''), { total: 3, done: 1, open: 2 });
+    assert.deepEqual(tasks.count(''), { total: 3, done: 1, open: 2, donePercent: 33 });
     assert.deepEqual(tasks.count(''), tasks.count());
   });
 });

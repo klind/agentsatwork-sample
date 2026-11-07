@@ -130,10 +130,11 @@ export class TaskList {
   }
 
   /**
-   * How many tasks there are, how many of them are done, and how many are not.
+   * How many tasks there are, how many of them are done, and how many are not, and the share that
+   * are done as a whole percentage from 0 to 100, rounded down, which is 0 when there are none.
    * Given a non-empty `search`, counts only the tasks whose title contains it, ignoring case.
    */
-  count(search?: string): { total: number; done: number; open: number } {
+  count(search?: string): { total: number; done: number; open: number; donePercent: number } {
     let total = 0;
     let done = 0;
     for (const task of this.tasks.values()) {
@@ -141,6 +142,7 @@ export class TaskList {
       total++;
       if (task.done) done++;
     }
-    return { total, done, open: total - done };
+    const donePercent = total === 0 ? 0 : Math.floor((done * 100) / total);
+    return { total, done, open: total - done, donePercent };
   }
 }
