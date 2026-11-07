@@ -16,6 +16,7 @@ import { TaskList, ValidationError } from './tasks.ts';
  *   PATCH  /tasks/:id           change a task's title, body {"title": "..."}
  *   POST   /tasks/:id/complete  mark a task done
  *   POST   /tasks/:id/reopen    mark a task not done
+ *   POST   /tasks/:id/toggle    mark a task done if it is not, and not done if it is
  *   DELETE /tasks/:id           remove a task
  */
 export function createApp(tasks: TaskList = new TaskList()): Server {
@@ -55,6 +56,7 @@ async function handle(tasks: TaskList, request: IncomingMessage, response: Serve
   }
   if (parts.length === 3 && parts[2] === 'complete' && method === 'POST') return found(response, tasks.complete(id));
   if (parts.length === 3 && parts[2] === 'reopen' && method === 'POST') return found(response, tasks.reopen(id));
+  if (parts.length === 3 && parts[2] === 'toggle' && method === 'POST') return found(response, tasks.toggle(id));
 
   return send(response, 404, { error: 'not found' });
 }

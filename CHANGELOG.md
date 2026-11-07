@@ -5,6 +5,7 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
+- `POST /tasks/:id/toggle` marks a task that is not done as done, and a task that is done as not done, and answers with the task. An unknown id answers 404 with `not found`. (#19)
 - No change to the API: `.agentsatwork.yml` tells AgentsAtWork how to measure test coverage. (#18)
 - `GET /tasks?sort=-title` lists the tasks sorted by title, Z to A, ignoring case. It works with `done`, `q`, and `limit` the same way `sort=title` does. Any other `sort` now answers 400 with `sort must be title or -title`. (#17)
 - `GET /tasks?sort=title` lists the tasks sorted by title, A to Z, ignoring case. It sorts what `done` and `q` leave, and `limit` takes the first ones after sorting. Any other `sort` answers 400 with `sort must be title`. (#16)
