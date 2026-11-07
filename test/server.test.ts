@@ -458,6 +458,30 @@ describe('the HTTP API', () => {
     assert.deepEqual(await call('POST', '/tasks/99999/toggle'), { status: 404, json: { error: 'not found' } });
   });
 
+  it('marks every task that is not done as done, and says how many it changed', async () => {
+    await call('POST', '/tasks/complete-all');
+    const first = (await call('POST', '/tasks', { title: 'Open one' })).json!.id as number;
+    const done = (await call('POST', '/tasks', { title: 'Done already' })).json!.id as number;
+    const third = (await call('POST', '/tasks', { title: 'Open two' })).json!.id as number;
+    await call('POST', `/tasks/${done}/complete`);
+
+    assert.deepEqual(await call('POST', '/tasks/complete-all'), { status: 200, json: { completed: 2 } });
+    assert.deepEqual((await call('GET', `/tasks/${first}`)).json, { id: first, title: 'Open one', done: true });
+    assert.deepEqual((await call('GET', `/tasks/${done}`)).json, { id: done, title: 'Done already', done: true });
+    assert.deepEqual((await call('GET', `/tasks/${third}`)).json, { id: third, title: 'Open two', done: true });
+
+    for (const id of [first, done, third]) await call('DELETE', `/tasks/${id}`);
+  });
+
+  it('answers completed 0 when no task is open', async () => {
+    await call('POST', '/tasks/complete-all');
+    assert.deepEqual(await call('POST', '/tasks/complete-all'), { status: 200, json: { completed: 0 } });
+  });
+
+  it('answers 404 for complete-all with a method other than POST', async () => {
+    assert.deepEqual(await call('GET', '/tasks/complete-all'), { status: 404, json: { error: 'not found' } });
+  });
+
   it('answers 404 for what it does not have, and 405 for a method it does not take', async () => {
     assert.equal((await call('GET', '/nothing')).status, 404);
     assert.equal((await call('GET', '/tasks/abc')).status, 404);

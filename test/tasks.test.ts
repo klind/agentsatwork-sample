@@ -267,6 +267,33 @@ describe('the task list', () => {
     assert.equal(tasks.removeDone(), 0);
   });
 
+  it('marks every task that is not done as done, and says how many it changed', () => {
+    const tasks = new TaskList();
+    const first = tasks.add('Write the spec');
+    const second = tasks.add('Review it');
+    const third = tasks.add('Ship it');
+    tasks.complete(second.id);
+
+    assert.equal(tasks.completeAll(), 2);
+    assert.deepEqual(tasks.all(), [
+      { id: first.id, title: 'Write the spec', done: true },
+      { id: second.id, title: 'Review it', done: true },
+      { id: third.id, title: 'Ship it', done: true },
+    ]);
+    assert.deepEqual(tasks.count(), { total: 3, done: 3, open: 0 });
+    assert.deepEqual(tasks.add('Celebrate'), { id: third.id + 1, title: 'Celebrate', done: false });
+  });
+
+  it('completes nothing when every task is done already, or there are none', () => {
+    const tasks = new TaskList();
+    assert.equal(tasks.completeAll(), 0);
+
+    const { id } = tasks.add('Write the spec');
+    assert.equal(tasks.completeAll(), 1);
+    assert.equal(tasks.completeAll(), 0);
+    assert.deepEqual(tasks.all(), [{ id, title: 'Write the spec', done: true }]);
+  });
+
   it('counts the tasks, and the ones that are done', () => {
     const tasks = new TaskList();
     assert.deepEqual(tasks.count(), { total: 0, done: 0, open: 0 });
