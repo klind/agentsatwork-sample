@@ -80,6 +80,13 @@ export class TaskList {
     return task;
   }
 
+  /** Mark a task done if it is not, and not done if it is. Returns it, or undefined when there is no such task. */
+  toggle(id: number): Task | undefined {
+    const task = this.tasks.get(id);
+    if (task) task.done = !task.done;
+    return task;
+  }
+
   remove(id: number): boolean {
     return this.tasks.delete(id);
   }

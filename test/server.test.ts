@@ -443,6 +443,21 @@ describe('the HTTP API', () => {
     assert.deepEqual(await call('POST', '/tasks/99999/reopen'), { status: 404, json: { error: 'not found' } });
   });
 
+  it('toggles a task that is not done to done, and a task that is done to not done', async () => {
+    const id = (await call('POST', '/tasks', { title: 'Flip me' })).json!.id as number;
+
+    assert.deepEqual(await call('POST', `/tasks/${id}/toggle`), { status: 200, json: { id, title: 'Flip me', done: true } });
+    assert.deepEqual((await call('GET', `/tasks/${id}`)).json, { id, title: 'Flip me', done: true });
+    assert.deepEqual(await call('POST', `/tasks/${id}/toggle`), { status: 200, json: { id, title: 'Flip me', done: false } });
+    assert.deepEqual((await call('GET', `/tasks/${id}`)).json, { id, title: 'Flip me', done: false });
+
+    await call('DELETE', `/tasks/${id}`);
+  });
+
+  it('answers 404 when there is no task to toggle', async () => {
+    assert.deepEqual(await call('POST', '/tasks/99999/toggle'), { status: 404, json: { error: 'not found' } });
+  });
+
   it('answers 404 for what it does not have, and 405 for a method it does not take', async () => {
     assert.equal((await call('GET', '/nothing')).status, 404);
     assert.equal((await call('GET', '/tasks/abc')).status, 404);
