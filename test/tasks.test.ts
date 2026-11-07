@@ -267,6 +267,29 @@ describe('the task list', () => {
     assert.equal(tasks.removeDone(), 0);
   });
 
+  it('removes every task, done or not, and says how many', () => {
+    const tasks = new TaskList();
+    const first = tasks.add('Write the spec');
+    const second = tasks.add('Review it');
+    const third = tasks.add('Ship it');
+    tasks.complete(second.id);
+
+    assert.equal(tasks.removeAll(), 3);
+    assert.deepEqual(tasks.all(), []);
+    assert.deepEqual(tasks.count(), { total: 0, done: 0, open: 0 });
+    for (const { id } of [first, second, third]) assert.equal(tasks.get(id), undefined);
+    assert.deepEqual(tasks.add('Celebrate'), { id: third.id + 1, title: 'Celebrate', done: false });
+  });
+
+  it('removes nothing from an empty list', () => {
+    const tasks = new TaskList();
+    assert.equal(tasks.removeAll(), 0);
+
+    tasks.add('Write the spec');
+    assert.equal(tasks.removeAll(), 1);
+    assert.equal(tasks.removeAll(), 0);
+  });
+
   it('marks every task that is not done as done, and says how many it changed', () => {
     const tasks = new TaskList();
     const first = tasks.add('Write the spec');
