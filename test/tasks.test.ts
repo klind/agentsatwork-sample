@@ -341,4 +341,31 @@ describe('the task list', () => {
     tasks.complete(id);
     assert.deepEqual(tasks.count(), { total: 3, done: 1, open: 2 });
   });
+
+  it('counts only the tasks whose title contains the search, ignoring case', () => {
+    const tasks = new TaskList();
+    tasks.add('Buy milk');
+    const cow = tasks.add('Milk the cow');
+    tasks.add('Walk the dog');
+    tasks.complete(cow.id);
+
+    assert.deepEqual(tasks.count('milk'), { total: 2, done: 1, open: 1 });
+    assert.deepEqual(tasks.count('MILK'), { total: 2, done: 1, open: 1 });
+    assert.deepEqual(tasks.count('mil'), { total: 2, done: 1, open: 1 });
+    assert.deepEqual(tasks.count('walk'), { total: 1, done: 0, open: 1 });
+    assert.deepEqual(tasks.count('zebra'), { total: 0, done: 0, open: 0 });
+  });
+
+  it('counts every task with an empty search, the same as with no search', () => {
+    const tasks = new TaskList();
+    assert.deepEqual(tasks.count(''), { total: 0, done: 0, open: 0 });
+
+    tasks.add('Buy milk');
+    const cow = tasks.add('Milk the cow');
+    tasks.add('Walk the dog');
+    tasks.complete(cow.id);
+
+    assert.deepEqual(tasks.count(''), { total: 3, done: 1, open: 2 });
+    assert.deepEqual(tasks.count(''), tasks.count());
+  });
 });

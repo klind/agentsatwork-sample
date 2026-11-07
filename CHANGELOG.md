@@ -5,6 +5,7 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
+- `GET /tasks/count?q=milk` counts only the tasks whose title contains `milk`, ignoring case, in `total`, `done`, and `open` alike. An empty `q` is the same as no `q`. (#25)
 - `DELETE /tasks` removes every task, done or not, and answers 200 with how many it removed, as `removed`. An empty list answers `{"removed": 0}`. Before, `DELETE /tasks` answered 405. (#23)
 - `POST /tasks/complete-all` marks every task that is not done as done, and answers 200 with how many it changed, as `completed`. Tasks that are done already are left as they are and not counted. (#21)
 - `POST /tasks/:id/toggle` marks a task that is not done as done, and a task that is done as not done, and answers with the task. An unknown id answers 404 with `not found`. (#19)

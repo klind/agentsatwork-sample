@@ -17,6 +17,11 @@ function checked(title: unknown): string {
   return trimmed;
 }
 
+/** Whether the task's title contains `search`, ignoring case. Every task matches an empty or absent search. */
+function matches(task: Task, search: string | undefined): boolean {
+  return !search || task.title.toLowerCase().includes(search.toLowerCase());
+}
+
 /** The task list, kept in memory. One instance per server. */
 export class TaskList {
   private readonly tasks = new Map<number, Task>();
@@ -32,10 +37,7 @@ export class TaskList {
   all(done?: boolean, search?: string, limit?: number, sort?: 'title' | '-title'): Task[] {
     let tasks = [...this.tasks.values()];
     if (done !== undefined) tasks = tasks.filter((task) => task.done === done);
-    if (search) {
-      const wanted = search.toLowerCase();
-      tasks = tasks.filter((task) => task.title.toLowerCase().includes(wanted));
-    }
+    if (search) tasks = tasks.filter((task) => matches(task, search));
     if (sort !== undefined) {
       const direction = sort === 'title' ? 1 : -1;
       tasks.sort((a, b) => {
@@ -119,10 +121,18 @@ export class TaskList {
     return completed;
   }
 
-  /** How many tasks there are, how many of them are done, and how many are not. */
-  count(): { total: number; done: number; open: number } {
+  /**
+   * How many tasks there are, how many of them are done, and how many are not.
+   * Given a non-empty `search`, counts only the tasks whose title contains it, ignoring case.
+   */
+  count(search?: string): { total: number; done: number; open: number } {
+    let total = 0;
     let done = 0;
-    for (const task of this.tasks.values()) if (task.done) done++;
-    return { total: this.tasks.size, done, open: this.tasks.size - done };
+    for (const task of this.tasks.values()) {
+      if (!matches(task, search)) continue;
+      total++;
+      if (task.done) done++;
+    }
+    return { total, done, open: total - done };
   }
 }
