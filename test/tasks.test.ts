@@ -45,6 +45,34 @@ describe('the task list', () => {
     assert.equal(tasks.reopen(99), undefined);
   });
 
+  it('toggles a task that is not done to done, and back to not done', () => {
+    const tasks = new TaskList();
+    const { id } = tasks.add('Ship it');
+    assert.deepEqual(tasks.toggle(id), { id, title: 'Ship it', done: true });
+    assert.equal(tasks.get(id)?.done, true);
+    assert.deepEqual(tasks.toggle(id), { id, title: 'Ship it', done: false });
+    assert.equal(tasks.get(id)?.done, false);
+  });
+
+  it('toggles only the task it is given', () => {
+    const tasks = new TaskList();
+    const first = tasks.add('Write the spec');
+    const second = tasks.add('Review it');
+    tasks.complete(second.id);
+    tasks.toggle(first.id);
+    assert.deepEqual(tasks.all(), [
+      { id: first.id, title: 'Write the spec', done: true },
+      { id: second.id, title: 'Review it', done: true },
+    ]);
+  });
+
+  it('says so when there is no task to toggle, and changes nothing', () => {
+    const tasks = new TaskList();
+    const { id } = tasks.add('Ship it');
+    assert.equal(tasks.toggle(99), undefined);
+    assert.deepEqual(tasks.all(), [{ id, title: 'Ship it', done: false }]);
+  });
+
   it('renames a task, and keeps its id and whether it is done', () => {
     const tasks = new TaskList();
     const { id } = tasks.add('Write the spec');
