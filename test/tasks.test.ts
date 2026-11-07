@@ -317,6 +317,50 @@ describe('the task list', () => {
     assert.deepEqual(tasks.all(), [{ id, title: 'Write the spec', done: true }]);
   });
 
+  it('finds the open task that was added first', () => {
+    const tasks = new TaskList();
+    assert.equal(tasks.oldestOpen(), undefined);
+
+    const first = tasks.add('Write the spec');
+    const second = tasks.add('Review it');
+    const third = tasks.add('Ship it');
+    assert.deepEqual(tasks.oldestOpen(), { id: first.id, title: 'Write the spec', done: false });
+
+    tasks.complete(first.id);
+    assert.deepEqual(tasks.oldestOpen(), { id: second.id, title: 'Review it', done: false });
+
+    tasks.complete(second.id);
+    tasks.complete(third.id);
+    assert.equal(tasks.oldestOpen(), undefined);
+  });
+
+  it('keeps a reopened or renamed task in the place it was added', () => {
+    const tasks = new TaskList();
+    const first = tasks.add('Write the spec');
+    const second = tasks.add('Review it');
+    tasks.complete(first.id);
+    assert.equal(tasks.oldestOpen()?.id, second.id);
+
+    tasks.reopen(first.id);
+    assert.equal(tasks.oldestOpen()?.id, first.id);
+
+    tasks.rename(second.id, 'Review it again');
+    assert.deepEqual(tasks.oldestOpen(), { id: first.id, title: 'Write the spec', done: false });
+  });
+
+  it('finds the next open task once the oldest is removed', () => {
+    const tasks = new TaskList();
+    const first = tasks.add('Write the spec');
+    const second = tasks.add('Review it');
+    tasks.remove(first.id);
+    assert.equal(tasks.oldestOpen()?.id, second.id);
+
+    tasks.removeAll();
+    assert.equal(tasks.oldestOpen(), undefined);
+    const fresh = tasks.add('Celebrate');
+    assert.deepEqual(tasks.oldestOpen(), { id: fresh.id, title: 'Celebrate', done: false });
+  });
+
   it('counts the tasks, and the ones that are done', () => {
     const tasks = new TaskList();
     assert.deepEqual(tasks.count(), { total: 0, done: 0, open: 0 });

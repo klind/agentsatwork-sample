@@ -121,6 +121,14 @@ export class TaskList {
     return completed;
   }
 
+  /** The task that is not done and was added first, or undefined when every task is done or there are none. */
+  oldestOpen(): Task | undefined {
+    for (const task of this.tasks.values()) {
+      if (!task.done) return task;
+    }
+    return undefined;
+  }
+
   /**
    * How many tasks there are, how many of them are done, and how many are not.
    * Given a non-empty `search`, counts only the tasks whose title contains it, ignoring case.

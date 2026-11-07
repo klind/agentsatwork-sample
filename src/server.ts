@@ -13,6 +13,7 @@ import { TaskList, ValidationError } from './tasks.ts';
  *   DELETE /tasks               remove every task, done or not, and say how many
  *   GET    /tasks/count         how many tasks, how many are done, and how many are not,
  *                                and with ?q=... counting only those whose title contains it, ignoring case
+ *   GET    /tasks/oldest        the task that is not done and was added first
  *   DELETE /tasks/done          remove every task that is done, and say how many
  *   POST   /tasks/complete-all  mark every task that is not done as done, and say how many
  *   GET    /tasks/:id           one task
@@ -48,6 +49,10 @@ async function handle(tasks: TaskList, request: IncomingMessage, response: Serve
   }
 
   if (parts.length === 2 && parts[1] === 'count' && method === 'GET') return send(response, 200, tasks.count(searchFilter(searchParams)));
+  if (parts.length === 2 && parts[1] === 'oldest' && method === 'GET') {
+    const task = tasks.oldestOpen();
+    return task === undefined ? send(response, 404, { error: 'no open task' }) : send(response, 200, task);
+  }
   if (parts.length === 2 && parts[1] === 'done' && method === 'DELETE') return send(response, 200, { removed: tasks.removeDone() });
   if (parts.length === 2 && parts[1] === 'complete-all' && method === 'POST') return send(response, 200, { completed: tasks.completeAll() });
 

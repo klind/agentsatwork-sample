@@ -5,6 +5,7 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
+- `GET /tasks/oldest` answers 200 with the task that is not done and was added first, in the same shape as `GET /tasks/:id`. Renaming or reopening a task does not change when it was added. When every task is done, or there are none, it answers 404 with `no open task`. (#27)
 - `GET /tasks/count?q=milk` counts only the tasks whose title contains `milk`, ignoring case, in `total`, `done`, and `open` alike. An empty `q` is the same as no `q`. (#25)
 - `DELETE /tasks` removes every task, done or not, and answers 200 with how many it removed, as `removed`. An empty list answers `{"removed": 0}`. Before, `DELETE /tasks` answered 405. (#23)
 - `POST /tasks/complete-all` marks every task that is not done as done, and answers 200 with how many it changed, as `completed`. Tasks that are done already are left as they are and not counted. (#21)
