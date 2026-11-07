@@ -100,6 +100,18 @@ export class TaskList {
     return removed;
   }
 
+  /** Mark every task that is not done as done. Returns how many it changed. */
+  completeAll(): number {
+    let completed = 0;
+    for (const task of this.tasks.values()) {
+      if (!task.done) {
+        task.done = true;
+        completed++;
+      }
+    }
+    return completed;
+  }
+
   /** How many tasks there are, how many of them are done, and how many are not. */
   count(): { total: number; done: number; open: number } {
     let done = 0;
