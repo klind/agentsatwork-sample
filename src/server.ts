@@ -10,6 +10,7 @@ import { TaskList, ValidationError } from './tasks.ts';
  *                                and with ?sort=title sorted by title, A to Z, ignoring case, or with ?sort=-title Z to A,
  *                                and with ?limit=n at most the first n of those, after the sort
  *   POST   /tasks               add a task, body {"title": "..."}
+ *   DELETE /tasks               remove every task, done or not, and say how many
  *   GET    /tasks/count         how many tasks, how many are done, and how many are not
  *   DELETE /tasks/done          remove every task that is done, and say how many
  *   POST   /tasks/complete-all  mark every task that is not done as done, and say how many
@@ -41,6 +42,7 @@ async function handle(tasks: TaskList, request: IncomingMessage, response: Serve
   if (parts.length === 1) {
     if (method === 'GET') return send(response, 200, { tasks: tasks.all(doneFilter(searchParams), searchFilter(searchParams), limitFilter(searchParams), sortOrder(searchParams)) });
     if (method === 'POST') return send(response, 201, tasks.add((await body(request)).title));
+    if (method === 'DELETE') return send(response, 200, { removed: tasks.removeAll() });
     return send(response, 405, { error: 'method not allowed' });
   }
 

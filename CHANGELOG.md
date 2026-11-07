@@ -5,6 +5,7 @@ what it changes for someone who uses the API. CI checks that it did.
 
 ## Unreleased
 
+- `DELETE /tasks` removes every task, done or not, and answers 200 with how many it removed, as `removed`. An empty list answers `{"removed": 0}`. Before, `DELETE /tasks` answered 405. (#23)
 - `POST /tasks/complete-all` marks every task that is not done as done, and answers 200 with how many it changed, as `completed`. Tasks that are done already are left as they are and not counted. (#21)
 - `POST /tasks/:id/toggle` marks a task that is not done as done, and a task that is done as not done, and answers with the task. An unknown id answers 404 with `not found`. (#19)
 - No change to the API: `.agentsatwork.yml` tells AgentsAtWork how to measure test coverage. (#18)

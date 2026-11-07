@@ -86,6 +86,23 @@ describe('the HTTP API', () => {
     await call('DELETE', `/tasks/${id}`);
   });
 
+  it('removes every task, done or not, and says how many', async () => {
+    const first = (await call('POST', '/tasks', { title: 'Done one' })).json!.id as number;
+    const open = (await call('POST', '/tasks', { title: 'Still open' })).json!.id as number;
+    await call('POST', `/tasks/${first}/complete`);
+    const { total } = (await call('GET', '/tasks/count')).json as { total: number };
+
+    assert.deepEqual(await call('DELETE', '/tasks'), { status: 200, json: { removed: total } });
+    assert.deepEqual(await call('GET', '/tasks'), { status: 200, json: { tasks: [] } });
+    assert.equal((await call('GET', `/tasks/${first}`)).status, 404);
+    assert.equal((await call('GET', `/tasks/${open}`)).status, 404);
+  });
+
+  it('answers removed 0 when there are no tasks', async () => {
+    await call('DELETE', '/tasks');
+    assert.deepEqual(await call('DELETE', '/tasks'), { status: 200, json: { removed: 0 } });
+  });
+
   describe('listing tasks by whether they are done', () => {
     let first: number;
     let open: number;

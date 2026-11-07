@@ -100,6 +100,13 @@ export class TaskList {
     return removed;
   }
 
+  /** Remove every task, done or not. Returns how many it removed. */
+  removeAll(): number {
+    const removed = this.tasks.size;
+    this.tasks.clear();
+    return removed;
+  }
+
   /** Mark every task that is not done as done. Returns how many it changed. */
   completeAll(): number {
     let completed = 0;
