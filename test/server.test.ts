@@ -225,6 +225,22 @@ describe('the HTTP API', () => {
       assert.deepEqual(await call('GET', '/tasks?q=&done=true'), await call('GET', '/tasks?done=true'));
     });
 
+    it('counts only the tasks whose title contains q, in total, done, and open alike', async () => {
+      const listed = (await call('GET', '/tasks?q=milk')).json!.tasks as { done: boolean }[];
+      const done = listed.filter((task) => task.done).length;
+      const counted = await call('GET', '/tasks/count?q=milk');
+      assert.deepEqual(counted, { status: 200, json: { total: listed.length, done, open: listed.length - done } });
+      assert.ok(listed.length >= 2 && done >= 1 && listed.length - done >= 1);
+
+      assert.deepEqual(await call('GET', '/tasks/count?q=MILK'), counted);
+      assert.deepEqual(await call('GET', '/tasks/count?q=mil'), counted);
+      assert.deepEqual(await call('GET', '/tasks/count?q=zebra'), { status: 200, json: { total: 0, done: 0, open: 0 } });
+    });
+
+    it('counts every task with an empty q', async () => {
+      assert.deepEqual(await call('GET', '/tasks/count?q='), await call('GET', '/tasks/count'));
+    });
+
     it('still answers 400 for a bad done with q', async () => {
       assert.deepEqual(await call('GET', '/tasks?q=milk&done=yes'), { status: 400, json: { error: 'done must be true or false' } });
     });
